@@ -31,28 +31,27 @@ body{
 .header-actions{ display:flex; gap:12px; align-items:center; }
 
 /* Filters */
-#filters{ border-top:1px solid var(--line); border-bottom:1px solid var(--line); background:var(--card);
-  max-height: 1000px; overflow:hidden; transition:max-height .35s ease;
-  box-shadow: var(--shadow);
+#filters{
+  border-top:1px solid var(--line); border-bottom:1px solid var(--line); background:var(--card);
+  max-height:1000px; overflow:hidden; transition:max-height .35s ease; box-shadow:var(--shadow);
 }
-#filters:not(.open){ max-height: 0; border-top:0; border-bottom:0; box-shadow:none; }
-.filters-grid{
-  display:grid; grid-template-columns: repeat(3, 1fr); gap:14px;
-}
+#filters:not(.open){ max-height:0; border-top:0; border-bottom:0; box-shadow:none; }
+.filters-grid{ display:grid; grid-template-columns: repeat(3, 1fr); gap:14px; }
 .card{ background:var(--bg); border:1px solid var(--line); border-radius:14px; padding:14px; }
 .card h3{ margin:0 0 8px 0; font-size:14px; color:var(--muted); }
 .card.col2{ grid-column: span 2; }
 .row{ display:flex; gap:10px; flex-wrap:wrap; }
-/* IMPORTANT: Changed input width to 100% to fill container correctly */
+
+/* Inputs */
 input[type="text"], select{
-  flex:1 1 100%; 
-  background:var(--bg); color:var(--fg); border:1px solid var(--line); border-radius:10px; padding:10px; font-size:14px;
+  flex:1 1 100%;
+  background:var(--bg); color:var(--fg); border:1px solid var(--line);
+  border-radius:10px; padding:10px; font-size:14px;
 }
-/* Re-enable flex-basis for select to share space with text inputs */
-.row select{ flex-basis: auto; } 
+.row select{ flex-basis:auto; }
 
 .chips{ display:flex; flex-wrap:wrap; gap:8px; margin-top:8px; }
-.chip{ cursor:pointer; background:var(--bg); border:1px solid var(--line); padding:6px 10px; border-radius:999px; font-size:12px; transition: all .2s ease; }
+.chip{ cursor:pointer; background:var(--bg); border:1px solid var(--line); padding:6px 10px; border-radius:999px; font-size:12px; transition:all .2s ease; }
 .chip.active{ background:var(--accent); border-color:#bfdbfe; color:#1e40af; }
 
 /* Buttons */
@@ -63,44 +62,54 @@ input[type="text"], select{
 .switch input{ width:40px; height:22px; }
 
 /* Table */
-.table-wrap{ margin-top:14px; border:1px solid var(--line); border-radius:14px; overflow:hidden; background:var(--bg); box-shadow: var(--shadow); }
-table{ width:100%; border-collapse:collapse; **table-layout: fixed;** } /* ADDED: Fixed table layout */
+.table-wrap{ margin-top:14px; border:1px solid var(--line); border-radius:14px; overflow:hidden; background:var(--bg); box-shadow:var(--shadow); }
+table{ width:100%; border-collapse:collapse; table-layout: fixed; } /* FIXED */
 th, td{ border-bottom:1px solid var(--line); padding:12px; vertical-align:top; }
-th{ text-align:left; font-size:13px; color:var(--muted); position:sticky; top:114px; background:var(--bg); z-index:5; }
+th{
+  text-align:left; font-size:13px; color:var(--muted);
+  position:sticky; top:114px; background:var(--bg); z-index:5;
+}
 
-/* Explicit column widths for fixed layout */
-th:nth-child(1), td:nth-child(1){ width:4%; } /* # */
-th:nth-child(2), td:nth-child(2){ width:18%; } /* Portal Name */
+/* Explicit column widths for fixed layout (sum = 100%) */
+th:nth-child(1), td:nth-child(1){ width:4%; }  /* # */
+th:nth-child(2), td:nth-child(2){ width:18%; } /* Portal */
 th:nth-child(3), td:nth-child(3){ width:13%; } /* SRE */
 th:nth-child(4), td:nth-child(4){ width:13%; } /* DevOps */
 th:nth-child(5), td:nth-child(5){ width:13%; } /* Cloud */
 th:nth-child(6), td:nth-child(6){ width:13%; } /* Apigee */
 th:nth-child(7), td:nth-child(7){ width:22%; } /* Domain */
-th:nth-child(8), td:nth-child(8){ width:4%; } /* Checkbox */
+th:nth-child(8), td:nth-child(8){ width:4%; }  /* Checkbox */
 
 td a{ color:var(--link); text-decoration:none; font-weight:600; }
 .q{ display:block; color:var(--muted); font-size:12px; margin-top:6px; word-break:break-word; }
 .tools{ display:flex; gap:8px; margin-top:6px; }
-.mini{ padding:6px 8px; border-radius:8px; border:1px solid var(--line); background:transparent; color:var(--fg); font-size:12px; cursor:pointer; } /* ADDED: cursor:pointer */
+.mini{ padding:6px 8px; border-radius:8px; border:1px solid var(--line); background:transparent; color:var(--fg); font-size:12px; cursor:pointer; }
 
 /* Floating toolbar */
 .toolbar.floating{
   position:sticky; top:70px; z-index:15;
   display:flex; align-items:center; gap:10px;
   background:var(--soft); border:1px solid var(--line); padding:10px 12px; border-radius:12px;
-  box-shadow: var(--shadow);
+  box-shadow:var(--shadow);
 }
 
 /* Footer */
 .app-footer{ padding:16px 0 24px; }
 .app-footer small{ color:var(--muted); }
 
-/* Responsive */
+/* Responsive (sum remains 100%) */
 @media (max-width: 1024px){
   .filters-grid{ grid-template-columns: 1fr; }
   .card.col2{ grid-column: span 1; }
   th{ top:150px; }
-  /* Responsive table columns adjustment */
-  th:nth-child(2), td:nth-child(2){ width:30%; } /* Portal Name takes more space */
-  th:nth-child(7), td:nth-child(7){ width:25%; } /* Domain shrinks */
+
+  /* Adjust widths for smaller screens */
+  th:nth-child(1), td:nth-child(1){ width:4%; }   /* # */
+  th:nth-child(2), td:nth-child(2){ width:28%; }  /* Portal (more space) */
+  th:nth-child(3), td:nth-child(3){ width:9%; }   /* SRE */
+  th:nth-child(4), td:nth-child(4){ width:9%; }   /* DevOps */
+  th:nth-child(5), td:nth-child(5){ width:9%; }   /* Cloud */
+  th:nth-child(6), td:nth-child(6){ width:9%; }   /* Apigee */
+  th:nth-child(7), td:nth-child(7){ width:28%; }  /* Domain */
+  th:nth-child(8), td:nth-child(8){ width:4%; }   /* Checkbox */
 }
