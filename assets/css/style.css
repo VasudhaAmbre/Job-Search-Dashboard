@@ -51,39 +51,61 @@ input[type="text"], select{
 .row select{ flex-basis:auto; }
 
 .chips{ display:flex; flex-wrap:wrap; gap:8px; margin-top:8px; }
-.chip{ cursor:pointer; background:var(--bg); border:1px solid var(--line); padding:6px 10px; border-radius:999px; font-size:12px; transition:all .2s ease; }
+.chip{
+  cursor:pointer; background:var(--bg); border:1px solid var(--line);
+  padding:6px 10px; border-radius:999px; font-size:12px; transition:all .2s ease;
+}
+.chip:hover{ filter:brightness(0.98); }
 .chip.active{ background:var(--accent); border-color:#bfdbfe; color:#1e40af; }
 
 /* Buttons */
-.btn{ background:var(--link); color:#fff; border:0; padding:10px 14px; border-radius:10px; cursor:pointer; font-weight:600; }
+.btn{
+  background:var(--link); color:#fff; border:0; padding:10px 14px;
+  border-radius:10px; cursor:pointer; font-weight:600; transition:filter .15s ease;
+}
 .btn:hover{ filter:brightness(0.95); }
 .btn.ghost{ background:transparent; color:var(--fg); border:1px solid var(--line); }
 .switch{ display:inline-flex; align-items:center; gap:8px; font-size:14px; color:var(--muted); }
 .switch input{ width:40px; height:22px; }
 
 /* Table */
-.table-wrap{ margin-top:14px; border:1px solid var(--line); border-radius:14px; overflow:hidden; background:var(--bg); box-shadow:var(--shadow); }
-table{ width:100%; border-collapse:collapse; table-layout: fixed; } /* FIXED */
-th, td{ border-bottom:1px solid var(--line); padding:12px; vertical-align:top; }
+.table-wrap{
+  margin-top:14px; border:1px solid var(--line); border-radius:14px;
+  overflow:hidden; background:var(--bg); box-shadow:var(--shadow);
+}
+table{
+  width:100%; border-collapse:collapse; table-layout: fixed; /* ensures widths are respected */
+}
+th, td{
+  border-bottom:1px solid var(--line); padding:12px; vertical-align:top;
+  word-wrap:break-word; overflow-wrap:anywhere; /* safe wrapping for long queries/domains */
+}
 th{
   text-align:left; font-size:13px; color:var(--muted);
   position:sticky; top:114px; background:var(--bg); z-index:5;
 }
 
 /* Explicit column widths for fixed layout (sum = 100%) */
-th:nth-child(1), td:nth-child(1){ width:4%; }  /* # */
-th:nth-child(2), td:nth-child(2){ width:18%; } /* Portal */
-th:nth-child(3), td:nth-child(3){ width:13%; } /* SRE */
-th:nth-child(4), td:nth-child(4){ width:13%; } /* DevOps */
-th:nth-child(5), td:nth-child(5){ width:13%; } /* Cloud */
-th:nth-child(6), td:nth-child(6){ width:13%; } /* Apigee */
-th:nth-child(7), td:nth-child(7){ width:22%; } /* Domain */
-th:nth-child(8), td:nth-child(8){ width:4%; }  /* Checkbox */
+th:nth-child(1), td:nth-child(1){ width:4%; }   /* # */
+th:nth-child(2), td:nth-child(2){ width:18%; }  /* Portal */
+th:nth-child(3), td:nth-child(3){ width:13%; }  /* SRE */
+th:nth-child(4), td:nth-child(4){ width:13%; }  /* DevOps */
+th:nth-child(5), td:nth-child(5){ width:13%; }  /* Cloud */
+th:nth-child(6), td:nth-child(6){ width:13%; }  /* Apigee */
+th:nth-child(7), td:nth-child(7){ width:22%; }  /* Domain */
+th:nth-child(8), td:nth-child(8){ width:4%; }   /* Checkbox */
 
 td a{ color:var(--link); text-decoration:none; font-weight:600; }
-.q{ display:block; color:var(--muted); font-size:12px; margin-top:6px; word-break:break-word; }
+td a:hover, td a:focus{ text-decoration:underline; }
+.q{ display:block; color:var(--muted); font-size:12px; margin-top:6px; }
 .tools{ display:flex; gap:8px; margin-top:6px; }
-.mini{ padding:6px 8px; border-radius:8px; border:1px solid var(--line); background:transparent; color:var(--fg); font-size:12px; cursor:pointer; }
+.mini{
+  padding:6px 8px; border-radius:8px; border:1px solid var(--line);
+  background:transparent; color:var(--fg); font-size:12px; cursor:pointer;
+}
+.mini:focus-visible, .btn:focus-visible, .chip:focus-visible{
+  outline:3px solid rgba(96,165,250,.5); outline-offset:2px;
+}
 
 /* Floating toolbar */
 .toolbar.floating{
@@ -103,13 +125,18 @@ td a{ color:var(--link); text-decoration:none; font-weight:600; }
   .card.col2{ grid-column: span 1; }
   th{ top:150px; }
 
-  /* Adjust widths for smaller screens */
+  /* Adjust widths for smaller screens (still 100% total) */
   th:nth-child(1), td:nth-child(1){ width:4%; }   /* # */
-  th:nth-child(2), td:nth-child(2){ width:28%; }  /* Portal (more space) */
+  th:nth-child(2), td:nth-child(2){ width:28%; }  /* Portal */
   th:nth-child(3), td:nth-child(3){ width:9%; }   /* SRE */
   th:nth-child(4), td:nth-child(4){ width:9%; }   /* DevOps */
   th:nth-child(5), td:nth-child(5){ width:9%; }   /* Cloud */
   th:nth-child(6), td:nth-child(6){ width:9%; }   /* Apigee */
   th:nth-child(7), td:nth-child(7){ width:28%; }  /* Domain */
   th:nth-child(8), td:nth-child(8){ width:4%; }   /* Checkbox */
+}
+
+/* Optional: respect system dark preference on first load (until toggle runs) */
+@media (prefers-color-scheme: dark){
+  body:not(.dark-init-suppressed){ background:#0b1220; color:#e5e7eb; }
 }
