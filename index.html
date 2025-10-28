@@ -6,14 +6,21 @@
   <title>Job Search Dashboard</title>
   <link rel="stylesheet" href="assets/css/style.css">
 </head>
-<body>
+<body class="dark">
   <header class="app-header">
     <div class="wrap">
       <div class="brand">
         <h1>Job Search Dashboard</h1>
-        <span class="tag">SRE · DevOps · Cloud · Apigee</span>
+        <span class="tag">SRE · DevOps · Cloud · Apigee · Custom</span>
       </div>
+
+      <!-- Global controls summary -->
       <div class="header-actions">
+        <div id="activeSummary" class="badges">
+          <span id="recencyBadge" class="badge">Any time</span>
+          <span id="filtersBadge" class="badge muted">0 filters</span>
+          <span id="locationsBadge" class="badge muted">US</span>
+        </div>
         <button id="toggleFilters" class="btn ghost" aria-expanded="true">Hide filters</button>
         <label class="switch">
           <input type="checkbox" id="darkToggle" checked>
@@ -25,31 +32,58 @@
     <div id="filters" class="filters open">
       <div class="wrap">
         <div class="filters-grid">
+
+          <!-- Roles -->
           <div class="card">
             <h3>Roles</h3>
             <label><input type="checkbox" id="roleSRE" checked> SRE (incl. Observability)</label>
             <label><input type="checkbox" id="roleDevOps" checked> DevOps (incl. Observability)</label>
             <label><input type="checkbox" id="roleCloud" checked> Cloud (incl. Observability)</label>
             <label><input type="checkbox" id="roleApigee" checked> Apigee</label>
+
+            <div class="divider"></div>
+
+            <!-- Custom role -->
+            <div class="row">
+              <input type="text" id="customRoleName" placeholder="Custom role label (e.g., 'Observability')" />
+              <input type="text" id="customRoleQuery" placeholder='Custom role query (e.g., "Observability Engineer" OR "Telemetry")' />
+              <button class="btn mini" id="addRoleBtn" title="Add custom role">Add</button>
+            </div>
+            <div id="customRoles" class="role-pills"></div>
           </div>
 
+          <!-- Locations & Recency -->
           <div class="card col2">
-            <h3>Filters</h3>
-            <div class="row">
-              //<input type="text" id="location" placeholder='Location (e.g., US OR "United States" OR USA)' />
-              <select id="location" title="Location">
-                <option value='("US" OR "United States" OR USA)'>All United States</option>
-                <option value='"California" OR "CA"'>California</option>
-                <option value='"New York" OR "NY"'>New York</option>
-                <option value='"Texas" OR "TX"'>Texas</option>
-                <option value='"Washington" OR "WA"'>Washington</option>
-                <option value='"Massachusetts" OR "MA"'>Massachusetts</option>
-                <option value='"Illinois" OR "IL"'>Illinois</option>
-                <option value='"Florida" OR "FL"'>Florida</option>
-                <option value="">Custom (type below)</option>
-              </select>
-              <input type="text" id="locationCustom" placeholder="Custom location (optional)" />
+            <h3>Location & Recency</h3>
 
+            <!-- Multi-select locations -->
+            <div class="row">
+              <select id="locationPicker" multiple title="Hold Cmd/Ctrl to select multiple">
+                <option value='"California" OR "CA"'>California (CA)</option>
+                <option value='"New York" OR "NY"'>New York (NY)</option>
+                <option value='"Texas" OR "TX"'>Texas (TX)</option>
+                <option value='"Washington" OR "WA"'>Washington (WA)</option>
+                <option value='"Massachusetts" OR "MA"'>Massachusetts (MA)</option>
+                <option value='"Illinois" OR "IL"'>Illinois (IL)</option>
+                <option value='"Florida" OR "FL"'>Florida (FL)</option>
+              </select>
+              <button id="addSelectedLocations" class="btn ghost mini">Add selected</button>
+            </div>
+
+            <!-- Location chips and custom -->
+            <div id="locationsChips" class="chips"></div>
+            <div class="row">
+              <input type="text" id="locationCustom" placeholder='Custom (e.g., "Boston" OR "Seattle") — overrides US default' />
+              <button id="addCustomLocation" class="btn mini">Add location</button>
+              <button id="clearLocations" class="btn ghost mini">Clear locations</button>
+            </div>
+            <small class="muted">If no locations are added, search defaults to <b>US</b>. Adding a custom place disables the US fallback.</small>
+
+            <div class="divider"></div>
+
+            <!-- Global Recency -->
+            <div class="row">
+              <label class="label">Recency (global):</label>
               <select id="recency" title="Recency">
                 <option value="">Any time</option>
                 <optgroup label="Hours">
@@ -72,24 +106,25 @@
                   <option value="m">Past month</option>
                 </optgroup>
               </select>
+              <button class="btn" id="applyBtn">Apply</button>
+              <button class="btn ghost" id="resetBtn">Reset</button>
             </div>
+          </div>
 
-            <div class="chips">
+          <!-- Chips -->
+          <div class="card col2">
+            <h3>Quick Filters</h3>
+            <div id="chipsRow" class="chips large">
               <span class="chip" data-k='("remote" OR "hybrid")'>Remote / Hybrid</span>
               <span class="chip" data-k='"sponsorship" OR "H1B"'>Sponsorship / H1B</span>
               <span class="chip" data-k='"entry level" OR "junior"'>Entry / Junior</span>
               <span class="chip" data-k='"senior" OR "staff" OR "lead"'>Senior / Staff</span>
             </div>
-
             <div class="row">
-              <input type="text" id="extra" placeholder='Extra keywords (quoted or plain)' />
-            </div>
-
-            <div class="row">
-              <button class="btn" id="applyBtn">Apply</button>
-              <button class="btn ghost" id="resetBtn">Reset</button>
+              <input type="text" id="extra" placeholder='Extra keywords (e.g., "Kubernetes" OR "Azure")' />
             </div>
           </div>
+
         </div>
       </div>
     </div>
@@ -120,10 +155,10 @@
     </div>
 
     <footer class="app-footer">
-      <small>Tip: Use the chips and recency to narrow to fresh postings. Queries open Google searches with proper encoding.</small>
+      <small>Global recency and filters are applied to <b>all</b> links. Use “Copy query” or “Show simplified”.</small>
     </footer>
   </main>
 
-  <script src="assets/js/main.js?v=3" defer></script>
+  <script src="assets/js/main.js"></script>
 </body>
 </html>

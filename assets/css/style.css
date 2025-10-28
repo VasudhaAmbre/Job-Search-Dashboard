@@ -1,142 +1,26 @@
-:root{
-  --bg:#ffffff; --fg:#0f172a; --card:#f8fafc; --muted:#475569; --line:#e2e8f0; --link:#0b5ed7;
-  --soft:#eef2ff; --accent:#e7f1ff; --shadow: 0 8px 20px rgba(2,6,23,0.06);
-}
-.dark{
-  --bg:#0b1220; --fg:#e5e7eb; --card:#0f172a; --muted:#9aa4b2; --line:#1f2937; --link:#60a5fa;
-  --soft:#0b1a36; --accent:#0d274a; --shadow: 0 8px 24px rgba(0,0,0,0.25);
-}
+/* Badges in header */
+.badges { display:flex; gap:8px; align-items:center; margin-right:10px; }
+.badge { background:var(--accent); color:#1e3a8a; border:1px solid #bfdbfe; padding:6px 10px; border-radius:999px; font-size:12px; }
+.badge.muted { background:transparent; color:var(--muted); border:1px solid var(--line); }
 
-*{ box-sizing:border-box }
-html, body{ height:100% }
-body{
-  margin:0; background:var(--bg); color:var(--fg);
-  font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Arial, "Apple Color Emoji";
-  line-height:1.45;
-}
+/* Larger chips for quick filters */
+.chips.large .chip { padding:8px 12px; font-size:13px; }
 
-.wrap{ max-width:1200px; margin:0 auto; padding:16px; }
+/* Divider line in cards */
+.divider { height:1px; background:var(--line); margin:12px 0; }
 
-/* Header */
-.app-header{
-  position:sticky; top:0; z-index:20;
-  background:linear-gradient(180deg, var(--bg) 0%, rgba(0,0,0,0) 100%);
-  backdrop-filter: blur(6px);
-  border-bottom:1px solid var(--line);
+/* Removable chips (locations & custom roles) */
+.chip.removable { position:relative; padding-right:26px; }
+.chip-x{
+  position:relative; margin-left:8px;
+  border:1px solid var(--line); background:transparent; color:var(--fg);
+  width:20px; height:20px; line-height:18px; border-radius:999px; cursor:pointer; font-weight:700;
 }
+.chip-x:hover{ filter:brightness(0.9); }
 
-.brand{ display:flex; align-items:baseline; gap:10px; }
-.brand h1{ margin:0; font-size:22px; }
-.brand .tag{ font-size:12px; color:var(--muted); }
-.header-actions{ display:flex; gap:12px; align-items:center; }
+/* Mini button */
+.btn.mini { padding:8px 10px; border-radius:8px; font-weight:600; }
 
-/* Filters */
-#filters{
-  border-top:1px solid var(--line); border-bottom:1px solid var(--line); background:var(--card);
-  max-height:1000px; overflow:hidden; transition:max-height .35s ease; box-shadow:var(--shadow);
-}
-#filters:not(.open){ max-height:0; border-top:0; border-bottom:0; box-shadow:none; }
-.filters-grid{ display:grid; grid-template-columns: repeat(3, 1fr); gap:14px; }
-.card{ background:var(--bg); border:1px solid var(--line); border-radius:14px; padding:14px; }
-.card h3{ margin:0 0 8px 0; font-size:14px; color:var(--muted); }
-.card.col2{ grid-column: span 2; }
-.row{ display:flex; gap:10px; flex-wrap:wrap; }
-
-/* Inputs */
-input[type="text"], select{
-  flex:1 1 100%;
-  background:var(--bg); color:var(--fg); border:1px solid var(--line);
-  border-radius:10px; padding:10px; font-size:14px;
-}
-.row select{ flex-basis:auto; }
-
-.chips{ display:flex; flex-wrap:wrap; gap:8px; margin-top:8px; }
-.chip{
-  cursor:pointer; background:var(--bg); border:1px solid var(--line);
-  padding:6px 10px; border-radius:999px; font-size:12px; transition:all .2s ease;
-}
-.chip:hover{ filter:brightness(0.98); }
-.chip.active{ background:var(--accent); border-color:#bfdbfe; color:#1e40af; }
-
-/* Buttons */
-.btn{
-  background:var(--link); color:#fff; border:0; padding:10px 14px;
-  border-radius:10px; cursor:pointer; font-weight:600; transition:filter .15s ease;
-}
-.btn:hover{ filter:brightness(0.95); }
-.btn.ghost{ background:transparent; color:var(--fg); border:1px solid var(--line); }
-.switch{ display:inline-flex; align-items:center; gap:8px; font-size:14px; color:var(--muted); }
-.switch input{ width:40px; height:22px; }
-
-/* Table */
-.table-wrap{
-  margin-top:14px; border:1px solid var(--line); border-radius:14px;
-  overflow:hidden; background:var(--bg); box-shadow:var(--shadow);
-}
-table{
-  width:100%; border-collapse:collapse; table-layout: fixed; /* ensures widths are respected */
-}
-th, td{
-  border-bottom:1px solid var(--line); padding:12px; vertical-align:top;
-  word-wrap:break-word; overflow-wrap:anywhere; /* safe wrapping for long queries/domains */
-}
-th{
-  text-align:left; font-size:13px; color:var(--muted);
-  position:sticky; top:114px; background:var(--bg); z-index:5;
-}
-
-/* Explicit column widths for fixed layout (sum = 100%) */
-th:nth-child(1), td:nth-child(1){ width:4%; }   /* # */
-th:nth-child(2), td:nth-child(2){ width:18%; }  /* Portal */
-th:nth-child(3), td:nth-child(3){ width:13%; }  /* SRE */
-th:nth-child(4), td:nth-child(4){ width:13%; }  /* DevOps */
-th:nth-child(5), td:nth-child(5){ width:13%; }  /* Cloud */
-th:nth-child(6), td:nth-child(6){ width:13%; }  /* Apigee */
-th:nth-child(7), td:nth-child(7){ width:22%; }  /* Domain */
-th:nth-child(8), td:nth-child(8){ width:4%; }   /* Checkbox */
-
-td a{ color:var(--link); text-decoration:none; font-weight:600; }
-td a:hover, td a:focus{ text-decoration:underline; }
-.q{ display:block; color:var(--muted); font-size:12px; margin-top:6px; }
-.tools{ display:flex; gap:8px; margin-top:6px; }
-.mini{
-  padding:6px 8px; border-radius:8px; border:1px solid var(--line);
-  background:transparent; color:var(--fg); font-size:12px; cursor:pointer;
-}
-.mini:focus-visible, .btn:focus-visible, .chip:focus-visible{
-  outline:3px solid rgba(96,165,250,.5); outline-offset:2px;
-}
-
-/* Floating toolbar */
-.toolbar.floating{
-  position:sticky; top:70px; z-index:15;
-  display:flex; align-items:center; gap:10px;
-  background:var(--soft); border:1px solid var(--line); padding:10px 12px; border-radius:12px;
-  box-shadow:var(--shadow);
-}
-
-/* Footer */
-.app-footer{ padding:16px 0 24px; }
-.app-footer small{ color:var(--muted); }
-
-/* Responsive (sum remains 100%) */
-@media (max-width: 1024px){
-  .filters-grid{ grid-template-columns: 1fr; }
-  .card.col2{ grid-column: span 1; }
-  th{ top:150px; }
-
-  /* Adjust widths for smaller screens (still 100% total) */
-  th:nth-child(1), td:nth-child(1){ width:4%; }   /* # */
-  th:nth-child(2), td:nth-child(2){ width:28%; }  /* Portal */
-  th:nth-child(3), td:nth-child(3){ width:9%; }   /* SRE */
-  th:nth-child(4), td:nth-child(4){ width:9%; }   /* DevOps */
-  th:nth-child(5), td:nth-child(5){ width:9%; }   /* Cloud */
-  th:nth-child(6), td:nth-child(6){ width:9%; }   /* Apigee */
-  th:nth-child(7), td:nth-child(7){ width:28%; }  /* Domain */
-  th:nth-child(8), td:nth-child(8){ width:4%; }   /* Checkbox */
-}
-
-/* Optional: respect system dark preference on first load (until toggle runs) */
-@media (prefers-color-scheme: dark){
-  body:not(.dark-init-suppressed){ background:#0b1220; color:#e5e7eb; }
-}
+/* Custom role list */
+.custom-role-list { display:grid; gap:6px; margin-top:8px; }
+.custom-role-item { display:flex; align-items:center; gap:8px; }
