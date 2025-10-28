@@ -85,6 +85,10 @@ function composeQuery(roleBlock, siteFilter){
 function recencyParam(){
   const v = qs("#recency").value;
   if(!v) return "";
+  if(v.startsWith("h")){
+    const hrs = v.substring(1);
+    return `&tbs=qdr:h${hrs}`;
+  }
   return `&tbs=qdr:${v}`;
 }
 function gUrl(q){ return `https://www.google.com/search?q=${encodeURIComponent(q)}${recencyParam()}`; }

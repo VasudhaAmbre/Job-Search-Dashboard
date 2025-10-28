@@ -38,9 +38,25 @@
               <input type="text" id="location" placeholder="Location (e.g., US OR United States OR USA)" />
               <select id="recency" title="Recency">
                 <option value="">Any time</option>
-                <option value="d">Past 24 hours</option>
-                <option value="w">Past week</option>
-                <option value="m">Past month</option>
+                <optgroup label="Hours">
+                  <option value="h1">Past 1 hour</option>
+                  <option value="h3">Past 3 hours</option>
+                  <option value="h5">Past 5 hours</option>
+                  <option value="h7">Past 7 hours</option>
+                  <option value="h9">Past 9 hours</option>
+                  <option value="h11">Past 11 hours</option>
+                  <option value="h13">Past 13 hours</option>
+                  <option value="h15">Past 15 hours</option>
+                  <option value="h17">Past 17 hours</option>
+                  <option value="h19">Past 19 hours</option>
+                  <option value="h21">Past 21 hours</option>
+                  <option value="h23">Past 23 hours</option>
+                </optgroup>
+                <optgroup label="Days">
+                  <option value="d">Past 24 hours</option>
+                  <option value="w">Past week</option>
+                  <option value="m">Past month</option>
+                </optgroup>
               </select>
             </div>
             <div class="chips">
