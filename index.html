@@ -3,88 +3,81 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>Job Search Dashboard — V2</title>
+  <title>Job Search Dashboard</title>
   <link rel="stylesheet" href="assets/css/style.css">
 </head>
 <body>
-  <header class="topbar">
+  <header class="app-header">
     <div class="wrap">
       <div class="brand">
         <h1>Job Search Dashboard</h1>
-        <span class="muted">SRE · DevOps · Cloud · Apigee</span>
+        <span class="tag">SRE · DevOps · Cloud · Apigee</span>
       </div>
-      <div class="right">
-        <button id="darkToggle" class="icon-btn" title="Toggle dark mode">🌙</button>
-        <a href="https://github.com/" target="_blank" rel="noopener" class="icon-btn" title="GitHub">⎇</a>
+      <div class="header-actions">
+        <button id="toggleFilters" class="btn ghost" aria-expanded="true">Hide filters</button>
+        <label class="switch">
+          <input type="checkbox" id="darkToggle">
+          <span>Dark</span>
+        </label>
+      </div>
+    </div>
+    <div id="filters" class="filters open">
+      <div class="wrap">
+        <div class="filters-grid">
+          <div class="card">
+            <h3>Roles</h3>
+            <label><input type="checkbox" id="roleSRE" checked> SRE (incl. Observability)</label>
+            <label><input type="checkbox" id="roleDevOps" checked> DevOps (incl. Observability)</label>
+            <label><input type="checkbox" id="roleCloud" checked> Cloud (incl. Observability)</label>
+            <label><input type="checkbox" id="roleApigee" checked> Apigee</label>
+          </div>
+
+          <div class="card col2">
+            <h3>Filters</h3>
+            <div class="row">
+              <input type="text" id="location" placeholder="Location (e.g., US OR United States OR USA)" />
+              <select id="recency" title="Recency">
+                <option value="">Any time</option>
+                <option value="d">Past 24 hours</option>
+                <option value="w">Past week</option>
+                <option value="m">Past month</option>
+              </select>
+            </div>
+            <div class="chips">
+              <span class="chip" data-k='("remote" OR "hybrid")'>Remote / Hybrid</span>
+              <span class="chip" data-k='"sponsorship" OR "H1B"'>Sponsorship / H1B</span>
+              <span class="chip" data-k='"entry level" OR "junior"'>Entry / Junior</span>
+              <span class="chip" data-k='"senior" OR "staff" OR "lead"'>Senior / Staff</span>
+            </div>
+            <div class="row">
+              <input type="text" id="extra" placeholder="Extra keywords (quoted or plain)" />
+            </div>
+            <div class="row">
+              <button class="btn" id="applyBtn">Apply filters</button>
+              <button class="btn ghost" id="resetBtn">Reset</button>
+            </div>
+          </div>
+        </div>
       </div>
     </div>
   </header>
 
-  <section class="controls">
-    <div class="wrap">
-      <div class="toolbar">
-        <div class="tabs" role="tablist" aria-label="Roles">
-          <button role="tab" class="tab active" data-role="sre">SRE</button>
-          <button role="tab" class="tab" data-role="devops">DevOps</button>
-          <button role="tab" class="tab" data-role="cloud">Cloud</button>
-          <button role="tab" class="tab" data-role="apigee">Apigee</button>
-        </div>
-
-        <div class="inputs">
-          <input id="location" type="text" placeholder="Location (default: US / USA)" />
-          <select id="recency" title="Recency">
-            <option value="">Any time</option>
-            <optgroup label="Hours">
-              <option value="h1">Past 1 hour</option>
-              <option value="h3">Past 3 hours</option>
-              <option value="h5">Past 5 hours</option>
-              <option value="h7">Past 7 hours</option>
-              <option value="h9">Past 9 hours</option>
-              <option value="h11">Past 11 hours</option>
-              <option value="h13">Past 13 hours</option>
-              <option value="h15">Past 15 hours</option>
-              <option value="h17">Past 17 hours</option>
-              <option value="h19">Past 19 hours</option>
-              <option value="h21">Past 21 hours</option>
-              <option value="h23">Past 23 hours</option>
-            </optgroup>
-            <optgroup label="Days">
-              <option value="d">Past 24 hours</option>
-              <option value="w">Past week</option>
-              <option value="m">Past month</option>
-            </optgroup>
-          </select>
-          <input id="search" type="text" placeholder="Filter portals (e.g., 'workday')" />
-          <button id="apply" class="btn">Apply</button>
-          <button id="advancedToggle" class="btn ghost" aria-expanded="false">Advanced</button>
-        </div>
-      </div>
-
-      <div id="advanced" class="advanced collapse">
-        <div class="chips">
-          <button class="chip" data-k='("remote" OR "hybrid")'>Remote / Hybrid</button>
-          <button class="chip" data-k='"sponsorship" OR "H1B"'>Sponsorship / H1B</button>
-          <button class="chip" data-k='"entry level" OR "junior"'>Entry / Junior</button>
-          <button class="chip" data-k='"senior" OR "staff" OR "lead"'>Senior / Staff</button>
-        </div>
-        <input id="extra" type="text" placeholder="Extra keywords (quoted or plain)" />
-      </div>
-    </div>
-  </section>
-
   <main class="wrap">
-    <div class="actionbar">
+    <div class="toolbar floating">
       <label><input type="checkbox" id="selectAll"> Select all</label>
-      <button id="openSelected" class="btn ghost">Open selected</button>
+      <button class="btn ghost" id="openSelectedBtn" title="Opens selected links for the first checked role">Open selected</button>
     </div>
 
     <div class="table-wrap">
-      <table id="table">
+      <table id="portal-table">
         <thead>
           <tr>
             <th>#</th>
             <th>Portal</th>
-            <th id="roleCol">SRE — Search</th>
+            <th>SRE</th>
+            <th>DevOps</th>
+            <th>Cloud</th>
+            <th>Apigee</th>
             <th>Domain</th>
             <th><input type="checkbox" id="colSelectAll" title="Select all rows"></th>
           </tr>
@@ -93,12 +86,10 @@
       </table>
     </div>
 
-    <footer class="footer">
-      <small class="muted">Queries include Observability for SRE/DevOps/Cloud. Use “Advanced” for chips & extra keywords.</small>
+    <footer class="app-footer">
+      <small>Tip: Use the chips and recency to narrow to fresh postings. Queries open Google searches with proper encoding.</small>
     </footer>
   </main>
-
-  <div id="toast" class="toast" role="status" aria-live="polite"></div>
 
   <script src="assets/js/main.js"></script>
 </body>
