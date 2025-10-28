@@ -1,351 +1,96 @@
-
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<meta charset="UTF-8" />
-<meta name="viewport" content="width=device-width, initial-scale=1" />
-<title>Job Search Dashboard — Interactive</title>
-<style>
-  :root{
-    --bg:#ffffff; --fg:#0f172a; --card:#f8fafc; --muted:#475569; --line:#e2e8f0; --link:#0b5ed7;
-  }
-  .dark{
-    --bg:#0b1220; --fg:#e5e7eb; --card:#0f172a; --muted:#9aa4b2; --line:#1f2937; --link:#60a5fa;
-  }
-  * { box-sizing:border-box }
-  body { margin:0; font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Arial, "Apple Color Emoji"; background:var(--bg); color:var(--fg); }
-  header {
-    position:sticky; top:0; z-index:10;
-    background:var(--bg); border-bottom:1px solid var(--line);
-  }
-  .wrap { max-width:1200px; margin:0 auto; padding:16px; }
-  h1 { margin:0 0 8px 0; font-size:22px; }
-  .controls {
-    display:grid; gap:12px;
-    grid-template-columns: repeat(12, 1fr);
-    align-items: center;
-  }
-  .field { background:var(--card); border:1px solid var(--line); padding:10px; border-radius:10px; grid-column: span 12; }
-  .field.inline { display:flex; gap:12px; align-items:center; flex-wrap:wrap; }
-  .chips { display:flex; flex-wrap:wrap; gap:8px; }
-  .chip { cursor:pointer; background:var(--bg); border:1px solid var(--line); padding:6px 10px; border-radius:999px; font-size:13px; }
-  .chip.active { background:#e7f1ff; border-color:#bfdbfe; color:#1e40af; }
-  input[type="text"], select {
-    background:var(--bg); color:var(--fg); border:1px solid var(--line); border-radius:8px; padding:8px 10px; font-size:14px;
-  }
-  .btn { background:var(--link); color:#fff; border:0; padding:10px 14px; border-radius:10px; cursor:pointer; font-weight:600; }
-  .btn.secondary { background:transparent; color:var(--fg); border:1px solid var(--line); }
-  .row { display:flex; gap:10px; flex-wrap:wrap; }
-  .roles { display:flex; gap:10px; flex-wrap:wrap; }
-  .switch { display:inline-flex; align-items:center; gap:8px; font-size:14px; color:var(--muted); }
-  .switch input { width:40px; height:22px; }
-  .right { margin-left:auto }
-  table { width:100%; border-collapse:collapse; margin-top:14px; }
-  th, td { border-bottom:1px solid var(--line); padding:10px; vertical-align:top; }
-  th { text-align:left; font-size:13px; color:var(--muted); position:sticky; top:120px; background:var(--bg); z-index:5; }
-  td:nth-child(1){ width:40px; }
-  td:nth-child(2){ width:220px; }
-  a { color:var(--link); text-decoration:none; font-weight:600; }
-  .q { display:block; color:var(--muted); font-size:12px; margin-top:6px; word-break:break-word; }
-  .tools { display:flex; gap:8px; margin-top:6px; }
-  .mini { padding:6px 8px; border-radius:8px; border:1px solid var(--line); background:transparent; color:var(--fg); font-size:12px; cursor:pointer; }
-  .sticky-actions { display:flex; gap:10px; align-items:center; }
-  .checkbox { transform: translateY(1px); }
-  footer { border-top:1px solid var(--line); margin-top:20px; }
-  small { color:var(--muted); }
-  @media (max-width: 900px){
-    .controls { grid-template-columns: repeat(6, 1fr); }
-    th { top:160px; }
-  }
-</style>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Job Search Dashboard</title>
+  <link rel="stylesheet" href="assets/css/style.css">
 </head>
 <body>
-<header>
-  <div class="wrap">
-    <h1>Job Search Dashboard — Interactive</h1>
-    <div class="controls">
-      <div class="field inline" style="grid-column: span 12;">
-        <div class="roles">
-          <label><input class="checkbox" type="checkbox" id="roleSRE" checked> SRE (incl. Observability)</label>
-          <label><input class="checkbox" type="checkbox" id="roleDevOps" checked> DevOps (incl. Observability)</label>
-          <label><input class="checkbox" type="checkbox" id="roleCloud" checked> Cloud (incl. Observability)</label>
-          <label><input class="checkbox" type="checkbox" id="roleApigee" checked> Apigee</label>
-        </div>
-        <label class="switch right"><input type="checkbox" id="darkToggle"> Dark mode</label>
+  <header class="app-header">
+    <div class="wrap">
+      <div class="brand">
+        <h1>Job Search Dashboard</h1>
+        <span class="tag">SRE · DevOps · Cloud · Apigee</span>
       </div>
-
-      <div class="field" style="grid-column: span 7;">
-        <div class="row">
-          <input type="text" id="location" placeholder="Location filter (e.g., US OR United States OR USA)" style="flex:1;">
-          <select id="recency">
-            <option value="">Any time</option>
-            <option value="d">Past 24 hours</option>
-            <option value="w">Past week</option>
-            <option value="m">Past month</option>
-          </select>
-        </div>
-        <div class="chips" style="margin-top:10px;">
-          <span class="chip" data-k='("remote" OR "hybrid")'>Remote / Hybrid</span>
-          <span class="chip" data-k='"sponsorship" OR "H1B"'>Sponsorship / H1B</span>
-          <span class="chip" data-k='"entry level" OR "junior"'>Entry / Junior</span>
-          <span class="chip" data-k='"senior" OR "staff" OR "lead"'>Senior / Staff</span>
-        </div>
+      <div class="header-actions">
+        <button id="toggleFilters" class="btn ghost" aria-expanded="true">Hide filters</button>
+        <label class="switch">
+          <input type="checkbox" id="darkToggle">
+          <span>Dark</span>
+        </label>
       </div>
+    </div>
+    <div id="filters" class="filters open">
+      <div class="wrap">
+        <div class="filters-grid">
+          <div class="card">
+            <h3>Roles</h3>
+            <label><input type="checkbox" id="roleSRE" checked> SRE (incl. Observability)</label>
+            <label><input type="checkbox" id="roleDevOps" checked> DevOps (incl. Observability)</label>
+            <label><input type="checkbox" id="roleCloud" checked> Cloud (incl. Observability)</label>
+            <label><input type="checkbox" id="roleApigee" checked> Apigee</label>
+          </div>
 
-      <div class="field" style="grid-column: span 5;">
-        <div class="row">
-          <input type="text" id="extra" placeholder="Add extra keywords (quoted or plain)" style="flex:1;">
-        </div>
-        <div class="row" style="margin-top:10px;">
-          <button class="btn" id="applyBtn">Apply filters</button>
-          <button class="btn secondary" id="resetBtn">Reset</button>
-          <div class="sticky-actions right">
-            <label><input class="checkbox" type="checkbox" id="selectAll"> Select all</label>
-            <button class="btn secondary" id="openSelectedBtn" title="Opens selected links for the first checked role">Open selected</button>
+          <div class="card col2">
+            <h3>Filters</h3>
+            <div class="row">
+              <input type="text" id="location" placeholder="Location (e.g., US OR United States OR USA)" />
+              <select id="recency" title="Recency">
+                <option value="">Any time</option>
+                <option value="d">Past 24 hours</option>
+                <option value="w">Past week</option>
+                <option value="m">Past month</option>
+              </select>
+            </div>
+            <div class="chips">
+              <span class="chip" data-k='("remote" OR "hybrid")'>Remote / Hybrid</span>
+              <span class="chip" data-k='"sponsorship" OR "H1B"'>Sponsorship / H1B</span>
+              <span class="chip" data-k='"entry level" OR "junior"'>Entry / Junior</span>
+              <span class="chip" data-k='"senior" OR "staff" OR "lead"'>Senior / Staff</span>
+            </div>
+            <div class="row">
+              <input type="text" id="extra" placeholder="Extra keywords (quoted or plain)" />
+            </div>
+            <div class="row">
+              <button class="btn" id="applyBtn">Apply filters</button>
+              <button class="btn ghost" id="resetBtn">Reset</button>
+            </div>
           </div>
         </div>
       </div>
     </div>
-  </div>
-</header>
+  </header>
 
-<main class="wrap">
-  <table id="table">
-    <thead>
-      <tr>
-        <th>#</th>
-        <th>Portal</th>
-        <th>SRE</th>
-        <th>DevOps</th>
-        <th>Cloud</th>
-        <th>Apigee</th>
-        <th>Domain</th>
-        <th><input type="checkbox" id="colSelectAll" title="Select all rows"></th>
-      </tr>
-    </thead>
-    <tbody></tbody>
-  </table>
+  <main class="wrap">
+    <div class="toolbar floating">
+      <label><input type="checkbox" id="selectAll"> Select all</label>
+      <button class="btn ghost" id="openSelectedBtn" title="Opens selected links for the first checked role">Open selected</button>
+    </div>
 
-  <footer class="wrap" style="padding:12px 0 28px;">
-    <small>Tip: Use the filter chips and recency to narrow to fresh postings. Queries open Google searches with proper encoding.</small>
-  </footer>
-</main>
+    <div class="table-wrap">
+      <table id="portal-table">
+        <thead>
+          <tr>
+            <th>#</th>
+            <th>Portal</th>
+            <th>SRE</th>
+            <th>DevOps</th>
+            <th>Cloud</th>
+            <th>Apigee</th>
+            <th>Domain</th>
+            <th><input type="checkbox" id="colSelectAll" title="Select all rows"></th>
+          </tr>
+        </thead>
+        <tbody></tbody>
+      </table>
+    </div>
 
-<script>
-const portalsRanked = [
-  // Aggregators (top)
-  {name:"LinkedIn", site:'site:linkedin.com/jobs', domain:'linkedin.com/jobs'},
-  {name:"Indeed", site:'site:indeed.com', domain:'indeed.com'},
-  {name:"Glassdoor", site:'site:glassdoor.com', domain:'glassdoor.com'},
-  {name:"ZipRecruiter", site:'site:ziprecruiter.com', domain:'ziprecruiter.com'},
-  {name:"Dice", site:'site:dice.com', domain:'dice.com'},
-  // ATS
-  {name:"Workday", site:'site:myworkdayjobs.com', domain:'myworkdayjobs.com'},
-  {name:"Greenhouse", site:'site:greenhouse.io', domain:'greenhouse.io'},
-  {name:"Lever", site:'(site:jobs.lever.co OR site:lever.co)', domain:'jobs.lever.co / lever.co'},
-  {name:"iCIMS", site:'site:*.icims.com/jobs', domain:'*.icims.com/jobs'},
-  {name:"SmartRecruiters", site:'site:jobs.smartrecruiters.com', domain:'jobs.smartrecruiters.com'},
-  {name:"SAP SuccessFactors", site:'site:*.successfactors.com', domain:'*.successfactors.com'},
-  {name:"Oracle Cloud HCM", site:'site:oraclecloud.com (inurl:CandidateExperience OR inurl:hcmUI)', domain:'oraclecloud.com'},
-  {name:"UKG / UltiPro", site:'site:recruiting.ultipro.com', domain:'recruiting.ultipro.com'},
-  {name:"ADP Recruiting", site:'site:recruiting.adp.com', domain:'recruiting.adp.com'},
-  {name:"Jobvite", site:'site:jobs.jobvite.com', domain:'jobs.jobvite.com'},
-  {name:"Workable", site:'(site:apply.workable.com OR site:jobs.workable.com)', domain:'apply.workable.com / jobs.workable.com'},
-  {name:"Ashby", site:'(site:jobs.ashbyhq.com OR site:ashbyhq.com)', domain:'jobs.ashbyhq.com / ashbyhq.com'},
-  {name:"BambooHR", site:'site:*.bamboohr.com/careers', domain:'*.bamboohr.com/careers'},
-  {name:"Recruitee", site:'site:*.recruitee.com/o', domain:'*.recruitee.com/o'},
-  {name:"Rippling ATS", site:'site:ats.rippling.com', domain:'ats.rippling.com'},
-  {name:"Pinpoint", site:'(site:*.pinpointhq.com OR site:pinpointhq.com)', domain:'*.pinpointhq.com / pinpointhq.com'},
-  {name:"BreezyHR", site:'site:breezy.hr', domain:'breezy.hr'},
-  {name:"Paylocity", site:'site:recruiting.paylocity.com', domain:'recruiting.paylocity.com'},
-  {name:"Oracle Taleo", site:'site:taleo.net (inurl:careersection OR inurl:jobdetail)', domain:'taleo.net'},
-  {name:"Wellfound (AngelList Talent)", site:'site:wellfound.com inurl:/jobs', domain:'wellfound.com/jobs'},
-  {name:"Remote Rocketship", site:'site:remoterocketship.com', domain:'remoterocketship.com'},
-  // Combined catch-alls
-  {name:"Generic Jobs/Careers Subdomains", site:'(site:jobs.* OR site:careers.* OR inurl:/careers/ OR inurl:/career/)', domain:'jobs.* / careers.* / */careers/*'},
-  {name:"People/Talent Subdomains", site:'(site:people.* OR site:talent.*)', domain:'people.* / talent.*'}
-];
+    <footer class="app-footer">
+      <small>Tip: Use the chips and recency to narrow to fresh postings. Queries open Google searches with proper encoding.</small>
+    </footer>
+  </main>
 
-const baseSRE = '("Site Reliability Engineer" OR "SRE" OR "Platform Engineer" OR "Infrastructure Engineer" OR "Production Engineer" OR "Observability Engineer" OR "Monitoring Engineer" OR "Telemetry Engineer" OR "Observability")';
-const devOps = '("DevOps Engineer" OR "DevOps" OR "Platform Engineer" OR "Infrastructure Engineer" OR "Observability Engineer" OR "Monitoring Engineer" OR "Telemetry Engineer" OR "Observability")';
-const cloud = '("Cloud Engineer" OR "Cloud Infrastructure" OR "Cloud Platform" OR "Cloud DevOps" OR "Observability Engineer" OR "Monitoring Engineer" OR "Telemetry Engineer" OR "Observability")';
-const apigee = '("Apigee Engineer" OR "Apigee Developer" OR "API Platform Engineer" OR "API Gateway")';
-
-const qs = sel => document.querySelector(sel);
-const qsa = sel => Array.from(document.querySelectorAll(sel));
-
-function loadState(){
-  try{
-    const s = JSON.parse(localStorage.getItem("jsdash")||"{}");
-    if(s.roleSRE !== undefined) qs("#roleSRE").checked = s.roleSRE;
-    if(s.roleDevOps !== undefined) qs("#roleDevOps").checked = s.roleDevOps;
-    if(s.roleCloud !== undefined) qs("#roleCloud").checked = s.roleCloud;
-    if(s.roleApigee !== undefined) qs("#roleApigee").checked = s.roleApigee;
-    if(s.location) qs("#location").value = s.location;
-    if(s.recency) qs("#recency").value = s.recency;
-    if(s.extra) qs("#extra").value = s.extra;
-    if(s.dark) document.documentElement.classList.toggle("dark", s.dark), qs("#darkToggle").checked = s.dark;
-    if(s.chips){ s.chips.forEach(k => {
-      const chip = qsa(".chip").find(c => c.dataset.k === k);
-      if(chip) chip.classList.add("active");
-    }); }
-  }catch(e){}
-}
-
-function saveState(){
-  const chips = qsa(".chip.active").map(c => c.dataset.k);
-  const s = {
-    roleSRE: qs("#roleSRE").checked,
-    roleDevOps: qs("#roleDevOps").checked,
-    roleCloud: qs("#roleCloud").checked,
-    roleApigee: qs("#roleApigee").checked,
-    location: qs("#location").value.trim(),
-    recency: qs("#recency").value,
-    extra: qs("#extra").value.trim(),
-    chips,
-    dark: qs("#darkToggle").checked
-  };
-  localStorage.setItem("jsdash", JSON.stringify(s));
-}
-
-function composeQuery(roleBlock, siteFilter){
-  const filters = [];
-  const loc = qs("#location").value.trim();
-  if(loc){ filters.push(`(${loc})`); } else { filters.push('("US" OR "United States" OR USA)'); }
-
-  // chips
-  qsa(".chip.active").forEach(c => filters.push(c.dataset.k));
-
-  const extra = qs("#extra").value.trim();
-  if(extra) filters.push(extra);
-
-  const parts = [roleBlock].concat(filters).concat([siteFilter]).filter(Boolean);
-  return parts.join(" ");
-}
-
-function recencyParam(){
-  const v = qs("#recency").value;
-  if(!v) return "";
-  // Google tbs parameter: qdr:d,w,m
-  return `&tbs=qdr:${v}`;
-}
-
-function gUrl(q){
-  return `https://www.google.com/search?q=${encodeURIComponent(q)}${recencyParam()}`;
-}
-
-function render(){
-  saveState();
-  const tbody = qs("#table tbody");
-  tbody.innerHTML = "";
-  const use = portalsRanked;
-
-  const useSRE = qs("#roleSRE").checked;
-  const useDevOps = qs("#roleDevOps").checked;
-  const useCloud = qs("#roleCloud").checked;
-  const useApigee = qs("#roleApigee").checked;
-
-  use.forEach((p, i) => {
-    const tr = document.createElement("tr");
-    const idx = document.createElement("td"); idx.textContent = (i+1);
-    const name = document.createElement("td"); name.textContent = p.name;
-
-    function cell(roleBlock){
-      const q = composeQuery(roleBlock, p.site);
-      const a = document.createElement("a"); a.href = gUrl(q); a.target = "_blank"; a.rel="noopener"; a.textContent = "Search US Jobs";
-      const qEl = document.createElement("span"); qEl.className = "q"; qEl.textContent = "q=" + q;
-      const div = document.createElement("div"); div.appendChild(a); div.appendChild(qEl);
-
-      const tools = document.createElement("div"); tools.className = "tools";
-      const copyBtn = document.createElement("button"); copyBtn.className = "mini"; copyBtn.textContent = "Copy query";
-      copyBtn.addEventListener("click", async ()=>{ await navigator.clipboard.writeText(q); copyBtn.textContent="Copied!"; setTimeout(()=>copyBtn.textContent="Copy query",1200); });
-      tools.appendChild(copyBtn);
-      div.appendChild(tools);
-      const td = document.createElement("td"); td.appendChild(div); return td;
-    }
-
-    tr.appendChild(idx);
-    tr.appendChild(name);
-    tr.appendChild(useSRE ? cell(baseSRE) : document.createElement("td"));
-    tr.appendChild(useDevOps ? cell(devOps) : document.createElement("td"));
-    tr.appendChild(useCloud ? cell(cloud) : document.createElement("td"));
-    tr.appendChild(useApigee ? cell(apigee) : document.createElement("td"));
-
-    const domain = document.createElement("td"); domain.textContent = p.domain;
-    const sel = document.createElement("td");
-    const cb = document.createElement("input"); cb.type="checkbox"; cb.className="rowSelect";
-    sel.appendChild(cb);
-
-    tr.appendChild(domain);
-    tr.appendChild(sel);
-    tbody.appendChild(tr);
-  });
-}
-
-function bind(){
-  // Chips
-  qsa(".chip").forEach(ch => ch.addEventListener("click", (e)=>{
-    ch.classList.toggle("active"); render();
-  }));
-
-  // Controls
-  ["roleSRE","roleDevOps","roleCloud","roleApigee","location","recency","extra"].forEach(id => {
-    qs("#"+id).addEventListener("change", render);
-    qs("#"+id).addEventListener("input", (e)=>{ if(id==="location"||id==="extra") return; render(); });
-  });
-
-  // Dark toggle
-  qs("#darkToggle").addEventListener("change", e => {
-    document.documentElement.classList.toggle("dark", e.target.checked);
-    saveState();
-  });
-
-  // Apply / Reset
-  qs("#applyBtn").addEventListener("click", render);
-  qs("#resetBtn").addEventListener("click", ()=>{
-    qsa(".chip.active").forEach(c => c.classList.remove("active"));
-    qs("#location").value="";
-    qs("#recency").value="";
-    qs("#extra").value="";
-    qs("#roleSRE").checked = qs("#roleDevOps").checked = qs("#roleCloud").checked = qs("#roleApigee").checked = true;
-    render();
-  });
-
-  // Select all (rows)
-  qs("#selectAll").addEventListener("change", e => {
-    const on = e.target.checked;
-    qsa(".rowSelect").forEach(cb => cb.checked = on);
-    qs("#colSelectAll").checked = on;
-  });
-  qs("#colSelectAll").addEventListener("change", e => {
-    const on = e.target.checked;
-    qsa(".rowSelect").forEach(cb => cb.checked = on);
-    qs("#selectAll").checked = on;
-  });
-
-  // Open selected
-  qs("#openSelectedBtn").addEventListener("click", ()=>{
-    const firstCheckedRole = ["roleSRE","roleDevOps","roleCloud","roleApigee"].find(id => qs("#"+id).checked);
-    if(!firstCheckedRole){ alert("Select at least one role column to open."); return; }
-    const roleMap = {
-      roleSRE: baseSRE, roleDevOps: devOps, roleCloud: cloud, roleApigee: apigee
-    };
-    const roleBlock = roleMap[firstCheckedRole];
-    const rows = qsa("#table tbody tr");
-    rows.forEach((tr, idx) => {
-      const cb = tr.querySelector(".rowSelect");
-      if(cb && cb.checked){
-        const portal = portalsRanked[idx];
-        const q = composeQuery(roleBlock, portal.site);
-        window.open(gUrl(q), "_blank");
-      }
-    });
-  });
-}
-
-loadState();
-bind();
-render();
-</script>
+  <script src="assets/js/main.js"></script>
 </body>
 </html>

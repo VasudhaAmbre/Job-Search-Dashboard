@@ -1,22 +1,22 @@
-# Job Search Dashboard (SRE / DevOps / Cloud / Apigee)
+# Job Search Dashboard — Interactive (SRE / DevOps / Cloud / Apigee)
 
-A single-page dashboard with clickable Google searches across 25+ ATS and top job boards.
-Observability keywords are merged into SRE/DevOps/Cloud queries for broader coverage.
+A lightweight, framework-free dashboard to search jobs across top portals with role toggles, filters, and utilities.
 
-## 🚀 Quick Start (GitHub Pages)
-1. Create a new **public** repo on GitHub (e.g., `job-search-dashboard`).
-2. Upload these files (or push via git).
-3. In **Settings → Pages**, set:
-   - **Source:** `Deploy from a branch`
-   - **Branch:** `main` (or `master`), folder: `/ (root)`
-4. Save. Your site will be live at: `https://<your-username>.github.io/job-search-dashboard/`
+## Features
+- Role toggles: **SRE**, **DevOps**, **Cloud**, **Apigee** (Observability merged into SRE/DevOps/Cloud)
+- Filters: location, recency (24h/week/month), quick chips (Remote, Sponsorship, etc.), extra keywords
+- Copy query buttons, "Open selected" portals, Dark mode
+- Collapsible filter bar, floating toolbar, subtle animations
+- No build step; just static files (ideal for GitHub Pages)
 
-## 🛠️ Local Preview
-Just open `index.html` in your browser.
+## Run Locally
+Just open `index.html` in your browser. No server needed.
 
-## ✏️ Customize
-- To add keywords (e.g., "remote", "H1B", "sponsorship"), edit the queries inside `index.html` and re-deploy.
-- For a custom domain, add a `CNAME` file with your domain (e.g., `jobs.yourdomain.com`) and point DNS (CNAME) to `<your-username>.github.io`.
+## Deploy on GitHub Pages
+1. Upload this folder to your repo root.
+2. Settings → Pages → Deploy from a branch → Branch: `main` (root).
+3. Your site will be live at: `https://<username>.github.io/<repo>/`.
 
-## 📄 License
-MIT — free to use and modify.
+## Customize
+- Add filters to the query logic in `assets/js/main.js`
+- Edit styles in `assets/css/style.css`
