@@ -60,10 +60,20 @@
   function composeQuery(roleBlock, siteFilter) {
     const filters = [];
     const loc = (qs("#location")?.value || "").trim();
-    if (loc) filters.push(`(${loc})`); else filters.push('("US" OR "United States" OR USA)');
+    const customLoc = (qs("#locationCustom")?.value || "").trim();
+
+    if (customLoc) {
+      filters.push(`(${customLoc})`);
+    } else if (loc) {
+      filters.push(loc);
+    } else {
+      filters.push('("US" OR "United States" OR USA)');
+    }
+
     qsa(".chip.active").forEach(c => filters.push(c.dataset.k));
     const extra = (qs("#extra")?.value || "").trim();
     if (extra) filters.push(extra);
+
     return [roleBlock, ...filters, siteFilter].filter(Boolean).join(" ");
   }
 

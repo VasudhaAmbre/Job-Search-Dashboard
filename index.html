@@ -36,7 +36,20 @@
           <div class="card col2">
             <h3>Filters</h3>
             <div class="row">
-              <input type="text" id="location" placeholder='Location (e.g., US OR "United States" OR USA)' />
+              //<input type="text" id="location" placeholder='Location (e.g., US OR "United States" OR USA)' />
+              <select id="location" title="Location">
+                <option value='("US" OR "United States" OR USA)'>All United States</option>
+                <option value='"California" OR "CA"'>California</option>
+                <option value='"New York" OR "NY"'>New York</option>
+                <option value='"Texas" OR "TX"'>Texas</option>
+                <option value='"Washington" OR "WA"'>Washington</option>
+                <option value='"Massachusetts" OR "MA"'>Massachusetts</option>
+                <option value='"Illinois" OR "IL"'>Illinois</option>
+                <option value='"Florida" OR "FL"'>Florida</option>
+                <option value="">Custom (type below)</option>
+              </select>
+              <input type="text" id="locationCustom" placeholder="Custom location (optional)" />
+
               <select id="recency" title="Recency">
                 <option value="">Any time</option>
                 <optgroup label="Hours">
