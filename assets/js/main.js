@@ -1,4 +1,4 @@
-// ---- DATA ----
+// ---- DATA (UNCHANGED) ----
 const portalsRanked = [
   {name:"LinkedIn", site:'site:linkedin.com/jobs', domain:'linkedin.com/jobs'},
   {name:"Indeed", site:'site:indeed.com', domain:'indeed.com'},
@@ -30,13 +30,12 @@ const portalsRanked = [
   {name:"People/Talent Subdomains", site:'(site:people.* OR site:talent.*)', domain:'people.* / talent.*'}
 ];
 
-// Observability merged into SRE/DevOps/Cloud
 const baseSRE = '("Site Reliability Engineer" OR "SRE" OR "Platform Engineer" OR "Infrastructure Engineer" OR "Production Engineer" OR "Observability Engineer" OR "Monitoring Engineer" OR "Telemetry Engineer" OR "Observability")';
 const devOps = '("DevOps Engineer" OR "DevOps" OR "Platform Engineer" OR "Infrastructure Engineer" OR "Observability Engineer" OR "Monitoring Engineer" OR "Telemetry Engineer" OR "Observability")';
 const cloud = '("Cloud Engineer" OR "Cloud Infrastructure" OR "Cloud Platform" OR "Cloud DevOps" OR "Observability Engineer" OR "Monitoring Engineer" OR "Telemetry Engineer" OR "Observability")';
 const apigee = '("Apigee Engineer" OR "Apigee Developer" OR "API Platform Engineer" OR "API Gateway")';
 
-// ---- UTIL ----
+// ---- UTIL (UNCHANGED) ----
 const qs = sel => document.querySelector(sel);
 const qsa = sel => Array.from(document.querySelectorAll(sel));
 
@@ -96,7 +95,7 @@ function copyToClipboard(txt, el){
   });
 }
 
-// ---- RENDER ----
+// ---- RENDER (UNCHANGED) ----
 function render(){
   saveState();
   const tbody = qs("#portal-table tbody");
@@ -143,17 +142,24 @@ function render(){
   });
 }
 
-// ---- EVENTS ----
+// ---- EVENTS (MODIFIED) ----
 function bind(){
   // Chips
   qsa(".chip").forEach(ch => ch.addEventListener("click", ()=>{ ch.classList.toggle("active"); render(); }));
-  // Inputs
-  ["roleSRE","roleDevOps","roleCloud","roleApigee","location","recency","extra"].forEach(id => {
+  
+  // Checkboxes and Selects: Render instantly on change
+  ["roleSRE","roleDevOps","roleCloud","roleApigee","recency"].forEach(id => {
     qs("#"+id).addEventListener("change", render);
-    qs("#"+id).addEventListener("input", (e)=>{ if(id==="location"||id==="extra") return; render(); });
   });
-  // Apply / Reset
-  qs("#applyBtn").addEventListener("click", render);
+  
+  // Text Inputs: Render instantly on input
+  ["location","extra"].forEach(id => {
+    // Note: A debounce function could be added here for large datasets, 
+    // but for 28 portals, instant rendering is fast enough.
+    qs("#"+id).addEventListener("input", render);
+  });
+  
+  // Reset
   qs("#resetBtn").addEventListener("click", ()=>{
     qsa(".chip.active").forEach(c => c.classList.remove("active"));
     ["location","recency","extra"].forEach(id => qs("#"+id).value="");
@@ -201,7 +207,7 @@ function bind(){
   });
 }
 
-// ---- INIT ----
+// ---- INIT (UNCHANGED) ----
 loadState();
 bind();
 render();
