@@ -90,12 +90,13 @@
       const b = qs(id); if (b) { b.textContent = text; b.classList.toggle("muted", !L && !hasCustom); }
     });
   }
+  // Simplified label — removes "Search US Jobs" text
   function linkLabelForLocation() {
     const custom = (qs("#locationCustom")?.value || "").trim();
-    if (custom) return `Search ${custom} Jobs`;
-    if (locations.length === 1) return `Search ${locations[0].replaceAll('"','')} Jobs`;
-    if (locations.length > 1) return "Search Selected Locations";
-    return "Search US Jobs";
+    if (custom) return custom;
+    if (locations.length === 1) return locations[0].replaceAll('"', '');
+    if (locations.length > 1) return "Selected Locations";
+    return ""; // no label text
   }
 
   // ---------- UI: locations (chips) ----------
@@ -172,7 +173,7 @@
         const q = composeQuery(block, p.site);
         const a = document.createElement("a");
         a.className = "role-btn"; a.href = gUrl(q); a.target = "_blank"; a.rel = "noopener";
-        const span = document.createElement("span"); span.className = "label"; span.textContent = `${label} — ${linkLabelForLocation()}`;
+        const span = document.createElement("span"); span.className = "label"; span.textContent = `${label} `;
         const tools = document.createElement("div"); tools.className = "role-tools";
         const copy = document.createElement("button"); copy.className = "mini"; copy.textContent = "Copy";
         copy.onclick = (e) => { e.preventDefault(); navigator.clipboard.writeText(q).then(()=>{ copy.textContent="Copied!"; setTimeout(()=>copy.textContent="Copy",900); }); };
