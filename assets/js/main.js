@@ -97,16 +97,6 @@
     if (locations.length > 1) return "Search Selected Locations";
     return "Search US Jobs";
   }
-  function simplifyQueryHuman(q) {
-    try {
-      const siteIdx = q.lastIndexOf("site:");
-      const core = siteIdx > 0 ? q.slice(0, siteIdx).trim() : q;
-      return core
-        .replaceAll(DEFAULT_US, "US")
-        .replaceAll(/\\+/g, "")
-        .replaceAll(/\s+/g, " ");
-    } catch { return q; }
-  }
 
   // ---------- UI: locations (chips) ----------
   function addLocationChip(text) {
@@ -186,9 +176,7 @@
         const tools = document.createElement("div"); tools.className = "role-tools";
         const copy = document.createElement("button"); copy.className = "mini"; copy.textContent = "Copy";
         copy.onclick = (e) => { e.preventDefault(); navigator.clipboard.writeText(q).then(()=>{ copy.textContent="Copied!"; setTimeout(()=>copy.textContent="Copy",900); }); };
-        const simple = document.createElement("button"); simple.className = "mini"; simple.textContent = "Simplify";
-        simple.onclick = (e) => { e.preventDefault(); alert(simplifyQueryHuman(q)); };
-        tools.appendChild(copy); tools.appendChild(simple);
+        tools.appendChild(copy);
         a.appendChild(span); a.appendChild(tools);
         roleRow.appendChild(a);
       };
