@@ -4,158 +4,125 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>Job Search Dashboard</title>
-  <link rel="stylesheet" href="assets/css/style.css">
+  <link rel="stylesheet" href="assets/css/style.css" />
 </head>
 <body class="dark">
   <header class="app-header">
     <div class="wrap">
       <div class="brand">
         <h1>Job Search Dashboard</h1>
-        <span class="tag">SRE · DevOps · Cloud · Apigee · Custom</span>
+        <span class="tag">SRE · DevOps · Cloud · Apigee</span>
       </div>
 
-      <!-- Global controls summary -->
       <div class="header-actions">
-        <div id="activeSummary" class="badges">
+        <div class="badges">
           <span id="recencyBadge" class="badge">Any time</span>
           <span id="filtersBadge" class="badge muted">0 filters</span>
           <span id="locationsBadge" class="badge muted">US</span>
         </div>
-        <button id="toggleFilters" class="btn ghost" aria-expanded="true">Hide filters</button>
-        <label class="switch">
-          <input type="checkbox" id="darkToggle" checked>
-          <span>Dark</span>
-        </label>
-      </div>
-    </div>
-
-    <div id="filters" class="filters open">
-      <div class="wrap">
-        <div class="filters-grid">
-
-          <!-- Roles -->
-          <div class="card">
-            <h3>Roles</h3>
-            <label><input type="checkbox" id="roleSRE" checked> SRE (incl. Observability)</label>
-            <label><input type="checkbox" id="roleDevOps" checked> DevOps (incl. Observability)</label>
-            <label><input type="checkbox" id="roleCloud" checked> Cloud (incl. Observability)</label>
-            <label><input type="checkbox" id="roleApigee" checked> Apigee</label>
-
-            <div class="divider"></div>
-
-            <!-- Custom role -->
-            <div class="row">
-              <input type="text" id="customRoleName" placeholder="Custom role label (e.g., 'Observability')" />
-              <input type="text" id="customRoleQuery" placeholder='Custom role query (e.g., "Observability Engineer" OR "Telemetry")' />
-              <button class="btn mini" id="addRoleBtn" title="Add custom role">Add</button>
-            </div>
-            <div id="customRoles" class="role-pills"></div>
-          </div>
-
-          <!-- Locations & Recency -->
-          <div class="card col2">
-            <h3>Location & Recency</h3>
-
-            <!-- Multi-select locations -->
-            <div class="row">
-              <select id="locationPicker" multiple title="Hold Cmd/Ctrl to select multiple">
-                <option value='"California" OR "CA"'>California (CA)</option>
-                <option value='"New York" OR "NY"'>New York (NY)</option>
-                <option value='"Texas" OR "TX"'>Texas (TX)</option>
-                <option value='"Washington" OR "WA"'>Washington (WA)</option>
-                <option value='"Massachusetts" OR "MA"'>Massachusetts (MA)</option>
-                <option value='"Illinois" OR "IL"'>Illinois (IL)</option>
-                <option value='"Florida" OR "FL"'>Florida (FL)</option>
-              </select>
-              <button id="addSelectedLocations" class="btn ghost mini">Add selected</button>
-            </div>
-
-            <!-- Location chips and custom -->
-            <div id="locationsChips" class="chips"></div>
-            <div class="row">
-              <input type="text" id="locationCustom" placeholder='Custom (e.g., "Boston" OR "Seattle") — overrides US default' />
-              <button id="addCustomLocation" class="btn mini">Add location</button>
-              <button id="clearLocations" class="btn ghost mini">Clear locations</button>
-            </div>
-            <small class="muted">If no locations are added, search defaults to <b>US</b>. Adding a custom place disables the US fallback.</small>
-
-            <div class="divider"></div>
-
-            <!-- Global Recency -->
-            <div class="row">
-              <label class="label">Recency (global):</label>
-              <select id="recency" title="Recency">
-                <option value="">Any time</option>
-                <optgroup label="Hours">
-                  <option value="h1">Past 1 hour</option>
-                  <option value="h3">Past 3 hours</option>
-                  <option value="h5">Past 5 hours</option>
-                  <option value="h7">Past 7 hours</option>
-                  <option value="h9">Past 9 hours</option>
-                  <option value="h11">Past 11 hours</option>
-                  <option value="h13">Past 13 hours</option>
-                  <option value="h15">Past 15 hours</option>
-                  <option value="h17">Past 17 hours</option>
-                  <option value="h19">Past 19 hours</option>
-                  <option value="h21">Past 21 hours</option>
-                  <option value="h23">Past 23 hours</option>
-                </optgroup>
-                <optgroup label="Days">
-                  <option value="d">Past 24 hours</option>
-                  <option value="w">Past week</option>
-                  <option value="m">Past month</option>
-                </optgroup>
-              </select>
-              <button class="btn" id="applyBtn">Apply</button>
-              <button class="btn ghost" id="resetBtn">Reset</button>
-            </div>
-          </div>
-
-          <!-- Chips -->
-          <div class="card col2">
-            <h3>Quick Filters</h3>
-            <div id="chipsRow" class="chips large">
-              <span class="chip" data-k='("remote" OR "hybrid")'>Remote / Hybrid</span>
-              <span class="chip" data-k='"sponsorship" OR "H1B"'>Sponsorship / H1B</span>
-              <span class="chip" data-k='"entry level" OR "junior"'>Entry / Junior</span>
-              <span class="chip" data-k='"senior" OR "staff" OR "lead"'>Senior / Staff</span>
-            </div>
-            <div class="row">
-              <input type="text" id="extra" placeholder='Extra keywords (e.g., "Kubernetes" OR "Azure")' />
-            </div>
-          </div>
-
-        </div>
+        <label class="switch"><input type="checkbox" id="darkToggle" checked><span>Dark mode</span></label>
       </div>
     </div>
   </header>
 
   <main class="wrap">
-    <div class="toolbar floating">
-      <label><input type="checkbox" id="selectAll"> Select all</label>
-      <button class="btn ghost" id="openSelectedBtn" title="Opens selected links using the first checked role">Open selected</button>
-    </div>
+    <!-- Hero search (Indeed-style) -->
+    <section class="hero-search card">
+      <div class="search-box">
+        <div class="field">
+          <label>What</label>
+          <input type="text" id="extra" placeholder='Keywords (e.g., "Kubernetes" OR "Azure")'>
+        </div>
+        <div class="field">
+          <label>Where</label>
+          <input type="text" id="locationCustom" placeholder='Custom (e.g., "Boston" OR "Seattle")'>
+        </div>
+        <button class="btn" id="applyBtn">Search</button>
+      </div>
 
-    <div class="table-wrap">
-      <table id="portal-table">
-        <thead>
-          <tr>
-            <th>#</th>
-            <th>Portal</th>
-            <th>SRE</th>
-            <th>DevOps</th>
-            <th>Cloud</th>
-            <th>Apigee</th>
-            <th>Domain</th>
-            <th><input type="checkbox" id="colSelectAll" title="Select all rows"></th>
-          </tr>
-        </thead>
-        <tbody></tbody>
-      </table>
-    </div>
+      <div class="quick-row">
+        <div class="chips large" id="chipsRow">
+          <span class="chip" data-k='("remote" OR "hybrid")'>Remote / Hybrid</span>
+          <span class="chip" data-k='"sponsorship" OR "H1B"'>Sponsorship / H1B</span>
+          <span class="chip" data-k='"entry level" OR "junior"'>Entry / Junior</span>
+          <span class="chip" data-k='"senior" OR "staff" OR "lead"'>Senior / Staff</span>
+        </div>
+
+        <div class="row">
+          <label class="label">Recency:</label>
+          <select id="recency">
+            <option value="">Any time</option>
+            <optgroup label="Hours">
+              <option value="h1">Past 1 hour</option>
+              <option value="h3">Past 3 hours</option>
+              <option value="h5">Past 5 hours</option>
+              <option value="h7">Past 7 hours</option>
+              <option value="h9">Past 9 hours</option>
+              <option value="h11">Past 11 hours</option>
+              <option value="h13">Past 13 hours</option>
+              <option value="h15">Past 15 hours</option>
+              <option value="h17">Past 17 hours</option>
+              <option value="h19">Past 19 hours</option>
+              <option value="h21">Past 21 hours</option>
+              <option value="h23">Past 23 hours</option>
+            </optgroup>
+            <optgroup label="Days">
+              <option value="d">Past 24 hours</option>
+              <option value="w">Past week</option>
+              <option value="m">Past month</option>
+            </optgroup>
+          </select>
+          <button class="btn ghost" id="resetBtn">Reset</button>
+        </div>
+      </div>
+    </section>
+
+    <!-- Main split layout -->
+    <section class="layout">
+      <!-- Sidebar filters -->
+      <aside class="sidebar card">
+        <h3>Roles</h3>
+        <label><input type="checkbox" id="roleSRE" checked> SRE (incl. Observability)</label>
+        <label><input type="checkbox" id="roleDevOps" checked> DevOps (incl. Observability)</label>
+        <label><input type="checkbox" id="roleCloud" checked> Cloud (incl. Observability)</label>
+        <label><input type="checkbox" id="roleApigee" checked> Apigee</label>
+
+        <div class="divider"></div>
+
+        <h3>Locations</h3>
+        <select id="locationPicker" multiple title="Hold Cmd/Ctrl to select multiple">
+          <option value='"California" OR "CA"'>California (CA)</option>
+          <option value='"New York" OR "NY"'>New York (NY)</option>
+          <option value='"Texas" OR "TX"'>Texas (TX)</option>
+          <option value='"Washington" OR "WA"'>Washington (WA)</option>
+          <option value='"Massachusetts" OR "MA"'>Massachusetts (MA)</option>
+          <option value='"Illinois" OR "IL"'>Illinois (IL)</option>
+          <option value='"Florida" OR "FL"'>Florida (FL)</option>
+        </select>
+        <div class="row">
+          <button id="addSelectedLocations" class="btn ghost mini">Add selected</button>
+          <button id="clearLocations" class="btn ghost mini">Clear</button>
+        </div>
+        <div id="locationsChips" class="chips" style="margin-top:8px;"></div>
+      </aside>
+
+      <!-- Results -->
+      <section class="results">
+        <div class="results-toolbar">
+          <div class="badges">
+            <span id="recencyBadge2" class="badge">Any time</span>
+            <span id="filtersBadge2" class="badge muted">0 filters</span>
+            <span id="locationsBadge2" class="badge muted">US</span>
+          </div>
+          <button class="btn ghost" id="openSelectedBtn" title="Open selected portals using the first checked role">Open selected</button>
+        </div>
+
+        <div id="resultsGrid" class="results-grid"></div>
+      </section>
+    </section>
 
     <footer class="app-footer">
-      <small>Global recency and filters are applied to <b>all</b> links. Use “Copy query” or “Show simplified”.</small>
+      <small>Links open Google with your current filters and recency.</small>
     </footer>
   </main>
 
