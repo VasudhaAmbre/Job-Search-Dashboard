@@ -4,6 +4,15 @@
   const qs = (s) => document.querySelector(s);
   const qsa = (s) => Array.from(document.querySelectorAll(s));
 
+  // ---------- Render Performance Helpers ----------
+  let renderTimer;
+
+  // Debounce rendering so rapid updates (typing, checkbox changes) don’t re-render repeatedly
+  function scheduleRender() {
+    clearTimeout(renderTimer);
+    renderTimer = setTimeout(renderCards, 180); // 180ms delay
+  }
+
   // ---------- Portals (ranked) ----------
   const portals = [
     { name: "LinkedIn", site: "site:linkedin.com/jobs", domain: "linkedin.com/jobs" },
@@ -103,14 +112,15 @@
   function addLocationChip(text) {
     if (!text || locations.includes(text)) return;
     locations.push(text);
-    renderLocationChips(); renderCards();
+    renderLocationChips(); scheduleRender();
   }
   function removeLocationChip(text) {
     locations = locations.filter(l => l !== text);
-    renderLocationChips(); renderCards();
+    renderLocationChips(); scheduleRender();
   }
   function renderLocationChips() {
     const wrap = qs("#locationsChips");
+    if (!wrap) return;
     wrap.innerHTML = "";
     locations.forEach(L => {
       const pill = document.createElement("span");
@@ -146,10 +156,25 @@
   // ---------- Renderer (cards) ----------
   function renderCards() {
     updateBadges();
+
     const grid = qs("#resultsGrid");
+    if (!grid) return;
+
+    // Clear previous cards
     grid.innerHTML = "";
 
+    // Use a DocumentFragment to minimize reflow/repaint
+    const frag = document.createDocumentFragment();
+
+    // Defensive: ensure portals exist
+    if (!Array.isArray(portals) || portals.length === 0) {
+      grid.appendChild(document.createTextNode("No portals configured."));
+      return;
+    }
+
     portals.forEach((p, i) => {
+      if (!p || !p.name || !p.site) return;
+
       const card = document.createElement("div");
       card.className = "portal-card";
 
@@ -164,7 +189,7 @@
       const title = document.createElement("h4");
       title.className = "portal"; title.textContent = p.name;
       const domain = document.createElement("div");
-      domain.className = "domain"; domain.textContent = p.domain;
+      domain.className = "domain"; domain.textContent = p.domain || "";
       head.appendChild(title); head.appendChild(domain);
 
       // Role buttons row
@@ -176,7 +201,13 @@
         const span = document.createElement("span"); span.className = "label"; span.textContent = `${label} `;
         const tools = document.createElement("div"); tools.className = "role-tools";
         const copy = document.createElement("button"); copy.className = "mini"; copy.textContent = "Copy";
-        copy.onclick = (e) => { e.preventDefault(); navigator.clipboard.writeText(q).then(()=>{ copy.textContent="Copied!"; setTimeout(()=>copy.textContent="Copy",900); }); };
+        copy.onclick = (e) => {
+          e.preventDefault();
+          navigator.clipboard.writeText(q).then(() => {
+            copy.textContent = "Copied!";
+            setTimeout(() => (copy.textContent = "Copy"), 900);
+          });
+        };
         tools.appendChild(copy);
         a.appendChild(span); a.appendChild(tools);
         roleRow.appendChild(a);
@@ -207,35 +238,52 @@
       card.appendChild(body);
       card.appendChild(sel);
 
-      grid.appendChild(card);
+      // Append to fragment (fast)
+      frag.appendChild(card);
     });
+
+    // Attach all at once
+    grid.appendChild(frag);
   }
 
   // ---------- Bind events ----------
   function bind() {
     // Chips
-    qsa("#chipsRow .chip").forEach(c => c.addEventListener("click", () => { c.classList.toggle("active"); renderCards(); }));
+    qsa("#chipsRow .chip").forEach(c =>
+      c.addEventListener("click", () => {
+        c.classList.toggle("active");
+        scheduleRender();
+      })
+    );
 
-    // Apply reset
-    qs("#applyBtn")?.addEventListener("click", renderCards);
+    // Apply / reset
+    qs("#applyBtn")?.addEventListener("click", scheduleRender);
     qs("#resetBtn")?.addEventListener("click", () => {
       qsa("#chipsRow .chip").forEach(c => c.classList.remove("active"));
       ["extra","locationCustom"].forEach(id => { const el = qs("#"+id); if (el) el.value = ""; });
-      qs("#recency").value = "";
-      locations = []; renderLocationChips(); renderCards();
+      if (qs("#recency")) qs("#recency").value = "";
+      locations = [];
+      renderLocationChips();
+      scheduleRender();
     });
 
     // Sidebar locations
     qs("#addSelectedLocations")?.addEventListener("click", () => {
       const sel = qs("#locationPicker");
+      if (!sel) return;
       Array.from(sel.selectedOptions).forEach(opt => addLocationChip(opt.value));
       sel.selectedIndex = -1;
     });
-    qs("#clearLocations")?.addEventListener("click", () => { locations=[]; qs("#locationCustom").value=""; renderLocationChips(); renderCards(); });
+    qs("#clearLocations")?.addEventListener("click", () => {
+      locations = [];
+      if (qs("#locationCustom")) qs("#locationCustom").value = "";
+      renderLocationChips();
+      scheduleRender();
+    });
 
     // Role toggles & inputs
     ["roleSRE","roleDevOps","roleCloud","roleApigee","recency","extra","locationCustom"].forEach(id=>{
-      qs("#"+id)?.addEventListener("change", renderCards);
+      qs("#"+id)?.addEventListener("change", scheduleRender);
     });
 
     // Open selected (uses first checked role)
@@ -246,6 +294,7 @@
         const cb = card.querySelector(".rowSelect");
         if (cb && cb.checked) {
           const p = portals[idx];
+          if (!p) return;
           const q = composeQuery(roleBlock, p.site);
           window.open(gUrl(q), "_blank");
         }
