@@ -1,4 +1,5 @@
 /* Job Search Dashboard — Card Layout (Indeed-style) */
+import { PORTALS as portals, ROLE, DEFAULT_US } from "./config.js";
 
 (function () {
   const qs = (s) => document.querySelector(s);
@@ -7,57 +8,140 @@
   // ---------- Render Performance Helpers ----------
   let renderTimer;
 
-  // Debounce rendering so rapid updates (typing, checkbox changes) don’t re-render repeatedly
   function scheduleRender() {
     clearTimeout(renderTimer);
-    renderTimer = setTimeout(renderCards, 180); // 180ms delay
+    renderTimer = setTimeout(renderCards, 180);
   }
-
-  // ---------- Portals (ranked) ----------
-  const portals = [
-    { name: "LinkedIn", site: "site:linkedin.com/jobs", domain: "linkedin.com/jobs" },
-    { name: "Indeed", site: "site:indeed.com", domain: "indeed.com" },
-    { name: "Glassdoor", site: "site:glassdoor.com", domain: "glassdoor.com" },
-    { name: "ZipRecruiter", site: "site:ziprecruiter.com", domain: "ziprecruiter.com" },
-    { name: "Dice", site: "site:dice.com", domain: "dice.com" },
-
-    { name: "Workday", site: "site:myworkdayjobs.com", domain: "myworkdayjobs.com" },
-    { name: "Greenhouse", site: "site:greenhouse.io", domain: "greenhouse.io" },
-    { name: "Lever", site: "(site:jobs.lever.co OR site:lever.co)", domain: "jobs.lever.co / lever.co" },
-    { name: "iCIMS", site: "site:*.icims.com/jobs", domain: "*.icims.com/jobs" },
-    { name: "SmartRecruiters", site: "site:jobs.smartrecruiters.com", domain: "jobs.smartrecruiters.com" },
-    { name: "Workable", site: "(site:apply.workable.com OR site:jobs.workable.com)", domain: "apply.workable.com / jobs.workable.com" },
-    { name: "Ashby", site: "(site:jobs.ashbyhq.com OR site:ashbyhq.com)", domain: "jobs.ashbyhq.com / ashbyhq.com" },
-    { name: "SAP SuccessFactors", site: "site:*.successfactors.com", domain: "*.successfactors.com" },
-    { name: "Oracle Cloud HCM", site: "site:oraclecloud.com (inurl:CandidateExperience OR inurl:hcmUI)", domain: "oraclecloud.com" },
-    { name: "UKG / UltiPro", site: "site:recruiting.ultipro.com", domain: "recruiting.ultipro.com" },
-    { name: "ADP Recruiting", site: "site:recruiting.adp.com", domain: "recruiting.adp.com" },
-    { name: "Jobvite", site: "site:jobs.jobvite.com", domain: "jobs.jobvite.com" },
-
-    { name: "BambooHR", site: "site:*.bamboohr.com/careers", domain: "*.bamboohr.com/careers" },
-    { name: "Recruitee", site: "site:*.recruitee.com/o", domain: "*.recruitee.com/o" },
-    { name: "Rippling ATS", site: "site:ats.rippling.com", domain: "ats.rippling.com" },
-    { name: "Pinpoint", site: "(site:*.pinpointhq.com OR site:pinpointhq.com)", domain: "*.pinpointhq.com / pinpointhq.com" },
-    { name: "BreezyHR", site: "site:breezy.hr", domain: "breezy.hr" },
-    { name: "Paylocity", site: "site:recruiting.paylocity.com", domain: "recruiting.paylocity.com" },
-    { name: "Oracle Taleo", site: "site:taleo.net (inurl:careersection OR inurl:jobdetail)", domain: "taleo.net" },
-    { name: "Wellfound (AngelList Talent)", site: "site:wellfound.com inurl:/jobs", domain: "wellfound.com/jobs" },
-    { name: "Remote Rocketship", site: "site:remoterocketship.com", domain: "remoterocketship.com" },
-    { name: "Generic Jobs/Careers Subdomains", site: "(site:jobs.* OR site:careers.* OR inurl:/careers/ OR inurl:/career/)", domain: "jobs.* / careers.* / */careers/*" },
-    { name: "People/Talent Subdomains", site: "(site:people.* OR site:talent.*)", domain: "people.* / talent.*" }
-  ];
-
-  // ---------- Roles (observability merged) ----------
-  const ROLE = {
-    SRE: '("Site Reliability Engineer" OR "SRE" OR "Platform Engineer" OR "Infrastructure Engineer" OR "Production Engineer" OR "Observability Engineer" OR "Monitoring Engineer" OR "Telemetry Engineer" OR "Observability")',
-    DevOps: '("DevOps Engineer" OR "DevOps" OR "Platform Engineer" OR "Infrastructure Engineer" OR "Observability Engineer" OR "Monitoring Engineer" OR "Telemetry Engineer" OR "Observability")',
-    Cloud: '("Cloud Engineer" OR "Cloud Infrastructure" OR "Cloud Platform" OR "Cloud DevOps" OR "Observability Engineer" OR "Monitoring Engineer" OR "Telemetry Engineer" OR "Observability")',
-    Apigee: '("Apigee Engineer" OR "Apigee Developer" OR "API Platform Engineer" OR "API Gateway")'
-  };
 
   // ---------- State ----------
   let locations = []; // added chips (strings)
-  const DEFAULT_US = '("US" OR "United States" OR USA)';
+
+  // ---------- Persistence ----------
+  const STORAGE_KEY = "jsdash_v1";
+
+  function saveState() {
+    const chipsActive = Array.from(document.querySelectorAll("#chipsRow .chip.active"))
+      .filter(c => !c.classList.contains("removable"))
+      .map(c => c.dataset.k);
+
+    const state = {
+      recency: qs("#recency")?.value || "",
+      extra: qs("#extra")?.value || "",
+      custom: qs("#locationCustom")?.value || "",
+      locations,
+      chips: chipsActive,
+      roles: {
+        sre: !!qs("#roleSRE")?.checked,
+        devops: !!qs("#roleDevOps")?.checked,
+        cloud: !!qs("#roleCloud")?.checked,
+        apigee: !!qs("#roleApigee")?.checked
+      },
+      dark: !!qs("#darkToggle")?.checked
+    };
+    try { localStorage.setItem(STORAGE_KEY, JSON.stringify(state)); } catch {}
+  }
+
+  function loadState() {
+    let raw;
+    try { raw = localStorage.getItem(STORAGE_KEY); } catch {}
+    if (!raw) return;
+
+    const s = JSON.parse(raw);
+
+    if (qs("#recency")) qs("#recency").value = s.recency ?? "";
+    if (qs("#extra")) qs("#extra").value = s.extra ?? "";
+    if (qs("#locationCustom")) qs("#locationCustom").value = s.custom ?? "";
+
+    locations = Array.isArray(s.locations) ? s.locations.slice(0, 50) : [];
+
+    if (Array.isArray(s.chips)) {
+      qsa("#chipsRow .chip").forEach(c => {
+        if (!c.classList.contains("removable")) {
+          c.classList.toggle("active", s.chips.includes(c.dataset.k));
+        }
+      });
+    }
+
+    if (s.roles) {
+      if (qs("#roleSRE")) qs("#roleSRE").checked = !!s.roles.sre;
+      if (qs("#roleDevOps")) qs("#roleDevOps").checked = !!s.roles.devops;
+      if (qs("#roleCloud")) qs("#roleCloud").checked = !!s.roles.cloud;
+      if (qs("#roleApigee")) qs("#roleApigee").checked = !!s.roles.apigee;
+    }
+
+    if (qs("#darkToggle")) {
+      qs("#darkToggle").checked = !!s.dark;
+      document.body.classList.toggle("dark", !!s.dark);
+    }
+  }
+  // ---------- Permalinks (URL <-> State) ----------
+  function encodeList(arr) { return (arr || []).join("||"); }
+  function decodeList(str) { return str ? str.split("||").filter(Boolean) : []; }
+
+  function stateToParams() {
+    const p = new URLSearchParams();
+    p.set("r", qs("#recency")?.value || "");
+    p.set("e", qs("#extra")?.value || "");
+    p.set("c", qs("#locationCustom")?.value || "");
+    p.set("loc", encodeList(locations));
+
+    const chips = Array.from(document.querySelectorAll("#chipsRow .chip.active"))
+      .filter(c => !c.classList.contains("removable"))
+      .map(c => c.dataset.k);
+    p.set("chips", encodeList(chips));
+
+    const roles = ["SRE","DevOps","Cloud","Apigee"].filter(x => qs("#role"+x)?.checked);
+    p.set("roles", roles.join(","));
+
+    p.set("dark", qs("#darkToggle")?.checked ? "1" : "0");
+    return p.toString();
+  }
+
+  function applyParams() {
+    const p = new URLSearchParams(location.search);
+    if ([...p.keys()].length === 0) return false; // no params to apply
+
+    // Basic fields
+    if (qs("#recency")) qs("#recency").value = p.get("r") || "";
+    if (qs("#extra")) qs("#extra").value = p.get("e") || "";
+    if (qs("#locationCustom")) qs("#locationCustom").value = p.get("c") || "";
+
+    // Locations (removable chips)
+    locations = decodeList(p.get("loc"));
+
+    // Quick chips (non-removable)
+    const chipsSet = new Set(decodeList(p.get("chips")));
+    qsa("#chipsRow .chip").forEach(c => {
+      if (!c.classList.contains("removable")) {
+        c.classList.toggle("active", chipsSet.has(c.dataset.k));
+      }
+    });
+
+    // Roles (only if provided)
+    const rolesStr = p.get("roles") || "";
+    const roleSet = new Set(rolesStr.split(",").filter(Boolean));
+    if (roleSet.size) {
+      if (qs("#roleSRE")) qs("#roleSRE").checked = roleSet.has("SRE");
+      if (qs("#roleDevOps")) qs("#roleDevOps").checked = roleSet.has("DevOps");
+      if (qs("#roleCloud")) qs("#roleCloud").checked = roleSet.has("Cloud");
+      if (qs("#roleApigee")) qs("#roleApigee").checked = roleSet.has("Apigee");
+    }
+
+    // Dark mode (only if provided)
+    if (qs("#darkToggle") && p.has("dark")) {
+      const on = p.get("dark") === "1";
+      qs("#darkToggle").checked = on;
+      document.body.classList.toggle("dark", on);
+    }
+
+    return true;
+  }
+
+  function updatePermalink() {
+    const query = stateToParams();
+    const url = `${location.pathname}?${query}`;
+    history.replaceState(null, "", url);
+  }
 
   // ---------- Helpers ----------
   function recencyParam() {
@@ -73,7 +157,7 @@
     const custom = (qs("#locationCustom")?.value || "").trim();
     if (custom) return `(${custom})`;
     if (locations.length) return "(" + locations.join(" AND ") + ")";
-    return DEFAULT_US; // fallback
+    return DEFAULT_US;
   }
   function activeFiltersCount() {
     const chips = qsa(".chip.active").length;
@@ -99,24 +183,18 @@
       const b = qs(id); if (b) { b.textContent = text; b.classList.toggle("muted", !L && !hasCustom); }
     });
   }
-  // Simplified label — removes "Search US Jobs" text
-  function linkLabelForLocation() {
-    const custom = (qs("#locationCustom")?.value || "").trim();
-    if (custom) return custom;
-    if (locations.length === 1) return locations[0].replaceAll('"', '');
-    if (locations.length > 1) return "Selected Locations";
-    return ""; // no label text
-  }
 
   // ---------- UI: locations (chips) ----------
   function addLocationChip(text) {
     if (!text || locations.includes(text)) return;
     locations.push(text);
-    renderLocationChips(); scheduleRender();
+    renderLocationChips();
+    scheduleRender();
   }
   function removeLocationChip(text) {
     locations = locations.filter(l => l !== text);
-    renderLocationChips(); scheduleRender();
+    renderLocationChips();
+    scheduleRender();
   }
   function renderLocationChips() {
     const wrap = qs("#locationsChips");
@@ -160,13 +238,9 @@
     const grid = qs("#resultsGrid");
     if (!grid) return;
 
-    // Clear previous cards
     grid.innerHTML = "";
-
-    // Use a DocumentFragment to minimize reflow/repaint
     const frag = document.createDocumentFragment();
 
-    // Defensive: ensure portals exist
     if (!Array.isArray(portals) || portals.length === 0) {
       grid.appendChild(document.createTextNode("No portals configured."));
       return;
@@ -178,12 +252,10 @@
       const card = document.createElement("div");
       card.className = "portal-card";
 
-      // Left index
       const left = document.createElement("div");
       left.className = "left";
       left.textContent = i + 1;
 
-      // Header
       const head = document.createElement("div");
       head.className = "header";
       const title = document.createElement("h4");
@@ -192,8 +264,8 @@
       domain.className = "domain"; domain.textContent = p.domain || "";
       head.appendChild(title); head.appendChild(domain);
 
-      // Role buttons row
-      const roleRow = document.createElement("div"); roleRow.className = "role-row";
+      const roleRow = document.createElement("div");
+      roleRow.className = "role-row";
       const addRoleButton = (label, block) => {
         const q = composeQuery(block, p.site);
         const a = document.createElement("a");
@@ -222,7 +294,6 @@
       body.appendChild(head);
       body.appendChild(roleRow);
 
-      // Select + Open
       const sel = document.createElement("div");
       sel.className = "select-col";
       const cb = document.createElement("input"); cb.type="checkbox"; cb.className="rowSelect";
@@ -238,17 +309,17 @@
       card.appendChild(body);
       card.appendChild(sel);
 
-      // Append to fragment (fast)
       frag.appendChild(card);
     });
 
-    // Attach all at once
     grid.appendChild(frag);
+
+    // persist latest UI state
+    saveState();
   }
 
   // ---------- Bind events ----------
   function bind() {
-    // Chips
     qsa("#chipsRow .chip").forEach(c =>
       c.addEventListener("click", () => {
         c.classList.toggle("active");
@@ -260,8 +331,8 @@
     const form = qs("#searchForm");
     if (form) {
       form.addEventListener("submit", (e) => {
-        e.preventDefault();  // prevent page reload
-        scheduleRender();    // trigger search
+        e.preventDefault();
+        scheduleRender();
       });
     }
 
@@ -277,7 +348,6 @@
       scheduleRender();
     });
 
-
     // Sidebar locations
     qs("#addSelectedLocations")?.addEventListener("click", () => {
       const sel = qs("#locationPicker");
@@ -292,12 +362,10 @@
       scheduleRender();
     });
 
-    // Role toggles & inputs
     ["roleSRE","roleDevOps","roleCloud","roleApigee","recency","extra","locationCustom"].forEach(id=>{
       qs("#"+id)?.addEventListener("change", scheduleRender);
     });
 
-    // Open selected (uses first checked role)
     qs("#openSelectedBtn")?.addEventListener("click", () => {
       const roleBlock = firstCheckedRoleBlock();
       const cards = qsa(".portal-card");
@@ -312,15 +380,31 @@
       });
     });
 
-    // Dark mode
     const dark = qs("#darkToggle");
     if (dark) {
-      const setDark = (on) => document.body.classList.toggle("dark", on);
+      const setDark = (on) => {
+        document.body.classList.toggle("dark", on);
+        saveState();
+        updatePermalink();
+      };
       setDark(true);
       dark.addEventListener("change", () => setDark(dark.checked));
     }
   }
 
   // ---------- Init ----------
-  document.addEventListener("DOMContentLoaded", () => { bind(); renderCards(); });
+  document.addEventListener("DOMContentLoaded", () => {
+    // 1) Try to hydrate from URL first
+    const usedUrl = applyParams();
+
+    // 2) If no URL state, fall back to localStorage
+    if (!usedUrl) {
+      loadState();
+    }
+
+    renderLocationChips();
+    bind();
+    renderCards(); // triggers save + updatePermalink
+  });
+
 })();
