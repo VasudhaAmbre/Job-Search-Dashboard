@@ -2,11 +2,30 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
+  <!-- ✅ Content Security Policy (CSP) -->
+  <meta
+    http-equiv="Content-Security-Policy"
+    content="
+      default-src 'self';
+      script-src 'self' https://cdn.jsdelivr.net https://unpkg.com 'unsafe-inline';
+      style-src 'self' 'unsafe-inline' https://fonts.googleapis.com https://cdn.jsdelivr.net;
+      font-src 'self' https://fonts.gstatic.com https://cdn.jsdelivr.net;
+      img-src 'self' data: https:;
+      connect-src 'self';
+      frame-ancestors 'none';
+      base-uri 'self';
+      form-action 'self';
+      upgrade-insecure-requests;
+    "
+  />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>Job Search Dashboard</title>
   <link rel="stylesheet" href="assets/css/style.css" />
 </head>
 <body class="dark">
+  <!-- ✅ Skip link for keyboard users -->
+  <a href="#resultsGrid" class="skip-link">Skip to results</a>
+
   <header class="app-header">
     <div class="wrap">
       <div class="brand">
@@ -20,15 +39,29 @@
           <span id="filtersBadge" class="badge muted">0 filters</span>
           <span id="locationsBadge" class="badge muted">US</span>
         </div>
-        <label class="switch"><input type="checkbox" id="darkToggle" checked><span>Dark mode</span></label>
+        <label class="switch">
+          <input type="checkbox" id="darkToggle" checked>
+          <span>Dark mode</span>
+        </label>
+        <label class="switch">
+          <input type="checkbox" id="highContrastToggle">
+          <span>High contrast</span>
+        </label>
+        <label class="switch">
+          <input type="checkbox" id="reduceMotionToggle">
+          <span>Reduce motion</span>
+        </label>
       </div>
     </div>
   </header>
 
   <main class="wrap">
     <!-- Hero search (Indeed-style) -->
-    <section class="hero-search card">
-      <!-- ✅ Wrapped hero search in a form -->
+    <!-- ✅ Labeled region + hidden heading for screen readers -->
+    <section class="hero-search card" role="region" aria-labelledby="heroTitle">
+      <h2 id="heroTitle" class="sr-only">Search filters</h2>
+
+      <!-- Wrapped hero search in a form (Enter submits) -->
       <form id="searchForm" class="search-form">
         <div class="search-box">
           <div class="field">
@@ -78,15 +111,16 @@
           </div>
         </div>
       </form>
-      <!-- ✅ End of form -->
     </section>
 
     <!-- Main split layout -->
     <section class="layout">
       <!-- Sidebar filters -->
-      <aside class="sidebar card">
-        <h3>Roles</h3>
+      <!-- ✅ Labeled region + hidden heading -->
+      <aside class="sidebar card" role="region" aria-labelledby="sidebarTitle">
+        <h2 id="sidebarTitle" class="sr-only">Role and location filters</h2>
 
+        <h3>Roles</h3>
         <label><input type="checkbox" id="roleSRE" checked> Site Reliability Engineer</label>
         <label><input type="checkbox" id="roleDevOps" checked> DevOps</label>
         <label><input type="checkbox" id="roleCloud" checked> Cloud</label>
@@ -112,17 +146,52 @@
       </aside>
 
       <!-- Results -->
-      <section class="results">
-        <div class="results-toolbar">
-          <div class="badges">
+      <!-- ✅ Labeled region + hidden heading, toolbar ARIA, focusable list -->
+      <section class="results" role="region" aria-labelledby="resultsTitle">
+        <h2 id="resultsTitle" class="sr-only">Search results</h2>
+
+        <div class="results-toolbar" role="toolbar" aria-label="Results actions">
+          <div class="badges" aria-live="polite">
             <span id="recencyBadge2" class="badge">Any time</span>
             <span id="filtersBadge2" class="badge muted">0 filters</span>
             <span id="locationsBadge2" class="badge muted">US</span>
           </div>
-          <button class="btn ghost" id="openSelectedBtn" title="Open selected portals using the first checked role">Open selected</button>
+
+          <button class="btn ghost" id="openSelectedBtn"
+                  title="Open selected portals using the first checked role"
+                  aria-controls="resultsGrid">
+            Open selected
+          </button>
+          <button class="btn ghost" id="copyAllBtn" title="Copy all search links to clipboard">
+            Copy all links
+          </button>
+          <button class="btn ghost" id="openInBatchesBtn" title="Open links in batches of 5 to avoid popup blocking">
+            Open 5 at a time
+          </button>
+
+          <!-- ✅ Saved Searches controls -->
+          <div class="saved-controls">
+            <input id="saveName" class="input mini" type="text" placeholder="Preset name" aria-label="Preset name" />
+            <button id="savePresetBtn" class="btn mini" title="Save current filters as a preset">
+              Save
+            </button>
+
+            <select id="savedList" class="mini" aria-label="Saved presets"></select>
+            <button id="loadPresetBtn" class="btn ghost mini" title="Load selected preset" disabled>
+              Load
+            </button>
+            <button id="deletePresetBtn" class="btn ghost mini" title="Delete selected preset" disabled>
+              Delete
+            </button>
+
+            <!-- Optional: shareable permalink -->
+            <button id="shareLinkBtn" class="btn ghost mini" title="Copy a shareable link with current filters">
+              Share search
+            </button>
+          </div>
         </div>
 
-        <div id="resultsGrid" class="results-grid"></div>
+        <div id="resultsGrid" class="results-grid" tabindex="-1" role="list" aria-label="Portals list"></div>
       </section>
     </section>
 
@@ -131,6 +200,7 @@
     </footer>
   </main>
 
+  <!-- ✅ Ensure ES modules load in order -->
   <script type="module" src="assets/js/config.js"></script>
   <script type="module" src="assets/js/main.js"></script>
 </body>
