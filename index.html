@@ -2,7 +2,8 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <!-- ✅ Safe CSP for Job Search Dashboard (works with JS modules and UI) -->
+
+  <!-- ✅ Safe CSP for module-based dashboard -->
   <meta
     http-equiv="Content-Security-Policy"
     content="
@@ -18,6 +19,7 @@
       upgrade-insecure-requests;
     "
   />
+
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>Job Search Dashboard</title>
   <link rel="stylesheet" href="assets/css/style.css" />
@@ -57,11 +59,10 @@
 
   <main class="wrap">
     <!-- Hero search (Indeed-style) -->
-    <!-- ✅ Labeled region + hidden heading for screen readers -->
     <section class="hero-search card" role="region" aria-labelledby="heroTitle">
       <h2 id="heroTitle" class="sr-only">Search filters</h2>
 
-      <!-- Wrapped hero search in a form (Enter submits) -->
+      <!-- ✅ Wrapped hero search in a form -->
       <form id="searchForm" class="search-form">
         <div class="search-box">
           <div class="field">
@@ -116,7 +117,6 @@
     <!-- Main split layout -->
     <section class="layout">
       <!-- Sidebar filters -->
-      <!-- ✅ Labeled region + hidden heading -->
       <aside class="sidebar card" role="region" aria-labelledby="sidebarTitle">
         <h2 id="sidebarTitle" class="sr-only">Role and location filters</h2>
 
@@ -146,7 +146,6 @@
       </aside>
 
       <!-- Results -->
-      <!-- ✅ Labeled region + hidden heading, toolbar ARIA, focusable list -->
       <section class="results" role="region" aria-labelledby="resultsTitle">
         <h2 id="resultsTitle" class="sr-only">Search results</h2>
 
@@ -156,7 +155,6 @@
             <span id="filtersBadge2" class="badge muted">0 filters</span>
             <span id="locationsBadge2" class="badge muted">US</span>
           </div>
-
           <button class="btn ghost" id="openSelectedBtn"
                   title="Open selected portals using the first checked role"
                   aria-controls="resultsGrid">
@@ -167,28 +165,7 @@
           </button>
           <button class="btn ghost" id="openInBatchesBtn" title="Open links in batches of 5 to avoid popup blocking">
             Open 5 at a time
-          </button>
-
-          <!-- ✅ Saved Searches controls -->
-          <div class="saved-controls">
-            <input id="saveName" class="input mini" type="text" placeholder="Preset name" aria-label="Preset name" />
-            <button id="savePresetBtn" class="btn mini" title="Save current filters as a preset">
-              Save
-            </button>
-
-            <select id="savedList" class="mini" aria-label="Saved presets"></select>
-            <button id="loadPresetBtn" class="btn ghost mini" title="Load selected preset" disabled>
-              Load
-            </button>
-            <button id="deletePresetBtn" class="btn ghost mini" title="Delete selected preset" disabled>
-              Delete
-            </button>
-
-            <!-- Optional: shareable permalink -->
-            <button id="shareLinkBtn" class="btn ghost mini" title="Copy a shareable link with current filters">
-              Share search
-            </button>
-          </div>
+          </button>          
         </div>
 
         <div id="resultsGrid" class="results-grid" tabindex="-1" role="list" aria-label="Portals list"></div>
@@ -200,7 +177,7 @@
     </footer>
   </main>
 
-  <!-- ✅ Ensure ES modules load in order -->
+  <!-- ✅ Place scripts at the bottom for best performance -->
   <script type="module" src="assets/js/config.js"></script>
   <script type="module" src="assets/js/main.js"></script>
 </body>
