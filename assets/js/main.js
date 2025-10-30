@@ -256,16 +256,27 @@
       })
     );
 
-    // Apply / reset
-    qs("#applyBtn")?.addEventListener("click", scheduleRender);
+    // Apply / reset (form submit friendly)
+    const form = qs("#searchForm");
+    if (form) {
+      form.addEventListener("submit", (e) => {
+        e.preventDefault();  // prevent page reload
+        scheduleRender();    // trigger search
+      });
+    }
+
     qs("#resetBtn")?.addEventListener("click", () => {
       qsa("#chipsRow .chip").forEach(c => c.classList.remove("active"));
-      ["extra","locationCustom"].forEach(id => { const el = qs("#"+id); if (el) el.value = ""; });
+      ["extra", "locationCustom"].forEach(id => {
+        const el = qs("#" + id);
+        if (el) el.value = "";
+      });
       if (qs("#recency")) qs("#recency").value = "";
       locations = [];
       renderLocationChips();
       scheduleRender();
     });
+
 
     // Sidebar locations
     qs("#addSelectedLocations")?.addEventListener("click", () => {

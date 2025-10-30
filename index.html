@@ -28,53 +28,57 @@
   <main class="wrap">
     <!-- Hero search (Indeed-style) -->
     <section class="hero-search card">
-      <div class="search-box">
-        <div class="field">
-          <label>What</label>
-          <input type="text" id="extra" placeholder='Keywords (e.g., "Kubernetes" OR "Azure")'>
-        </div>
-        <div class="field">
-          <label>Where</label>
-          <input type="text" id="locationCustom" placeholder='Custom (e.g., "Boston" OR "Seattle")'>
-        </div>
-        <button class="btn" id="applyBtn">Search</button>
-      </div>
-
-      <div class="quick-row">
-        <div class="chips large" id="chipsRow">
-          <span class="chip" data-k='("remote" OR "hybrid")'>Remote / Hybrid</span>
-          <span class="chip" data-k='"sponsorship" OR "H1B"'>Sponsorship / H1B</span>
-          <span class="chip" data-k='"entry level" OR "junior"'>Entry / Junior</span>
-          <span class="chip" data-k='"senior" OR "staff" OR "lead"'>Senior / Staff</span>
+      <!-- ✅ Wrapped hero search in a form -->
+      <form id="searchForm" class="search-form">
+        <div class="search-box">
+          <div class="field">
+            <label for="extra">What</label>
+            <input type="text" id="extra" placeholder='Keywords (e.g., "Kubernetes" OR "Azure")'>
+          </div>
+          <div class="field">
+            <label for="locationCustom">Where</label>
+            <input type="text" id="locationCustom" placeholder='Custom (e.g., "Boston" OR "Seattle")'>
+          </div>
+          <button type="submit" class="btn" id="applyBtn">Search</button>
         </div>
 
-        <div class="row">
-          <label class="label">Recency:</label>
-          <select id="recency">
-            <option value="">Any time</option>
-            <optgroup label="Hours">
-              <option value="h1">Past 1 hour</option>
-              <option value="h3">Past 3 hours</option>
-              <option value="h5">Past 5 hours</option>
-              <option value="h7">Past 7 hours</option>
-              <option value="h9">Past 9 hours</option>
-              <option value="h11">Past 11 hours</option>
-              <option value="h13">Past 13 hours</option>
-              <option value="h15">Past 15 hours</option>
-              <option value="h17">Past 17 hours</option>
-              <option value="h19">Past 19 hours</option>
-              <option value="h21">Past 21 hours</option>
-              <option value="h23">Past 23 hours</option>
-            </optgroup>
-            <optgroup label="Days">
-              <option value="d">Past 24 hours</option>
-              <option value="w">Past week</option>
-              <option value="m">Past month</option>
-            </optgroup>
-          </select>
-          <button class="btn ghost" id="resetBtn">Reset</button>
+        <div class="quick-row">
+          <div class="chips large" id="chipsRow">
+            <span class="chip" data-k='("remote" OR "hybrid")'>Remote / Hybrid</span>
+            <span class="chip" data-k='"sponsorship" OR "H1B"'>Sponsorship / H1B</span>
+            <span class="chip" data-k='"entry level" OR "junior"'>Entry / Junior</span>
+            <span class="chip" data-k='"senior" OR "staff" OR "lead"'>Senior / Staff</span>
+          </div>
+
+          <div class="row">
+            <label class="label" for="recency">Recency:</label>
+            <select id="recency">
+              <option value="">Any time</option>
+              <optgroup label="Hours">
+                <option value="h1">Past 1 hour</option>
+                <option value="h3">Past 3 hours</option>
+                <option value="h5">Past 5 hours</option>
+                <option value="h7">Past 7 hours</option>
+                <option value="h9">Past 9 hours</option>
+                <option value="h11">Past 11 hours</option>
+                <option value="h13">Past 13 hours</option>
+                <option value="h15">Past 15 hours</option>
+                <option value="h17">Past 17 hours</option>
+                <option value="h19">Past 19 hours</option>
+                <option value="h21">Past 21 hours</option>
+                <option value="h23">Past 23 hours</option>
+              </optgroup>
+              <optgroup label="Days">
+                <option value="d">Past 24 hours</option>
+                <option value="w">Past week</option>
+                <option value="m">Past month</option>
+              </optgroup>
+            </select>
+            <button type="button" class="btn ghost" id="resetBtn">Reset</button>
+          </div>
         </div>
-      </div>
+      </form>
+      <!-- ✅ End of form -->
     </section>
 
     <!-- Main split layout -->
@@ -83,25 +87,10 @@
       <aside class="sidebar card">
         <h3>Roles</h3>
 
-        <label>
-          <input type="checkbox" id="roleSRE" checked>
-          Site Reliability Engineer
-        </label>
-
-        <label>
-          <input type="checkbox" id="roleDevOps" checked>
-          DevOps
-        </label>
-
-        <label>
-          <input type="checkbox" id="roleCloud" checked>
-          Cloud
-        </label>
-
-        <label>
-          <input type="checkbox" id="roleApigee" checked>
-          Apigee
-        </label>
+        <label><input type="checkbox" id="roleSRE" checked> Site Reliability Engineer</label>
+        <label><input type="checkbox" id="roleDevOps" checked> DevOps</label>
+        <label><input type="checkbox" id="roleCloud" checked> Cloud</label>
+        <label><input type="checkbox" id="roleApigee" checked> Apigee</label>
 
         <div class="divider"></div>
 
