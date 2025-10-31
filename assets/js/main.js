@@ -1,6 +1,9 @@
-/* Job Search Dashboard — main.js (minimal, stable) */
+// main.js (top)
 import { PORTALS as RAW_PORTALS, ROLE, DEFAULT_US, NEGATIVE_GEO } from "./config.js";
+
+// right after imports
 const NEG_GEO = (typeof NEGATIVE_GEO === "string") ? NEGATIVE_GEO : "";
+
 
 (function () {
   // ---------- tiny helpers ----------
@@ -122,12 +125,13 @@ const NEG_GEO = (typeof NEGATIVE_GEO === "string") ? NEGATIVE_GEO : "";
     return `&tbs=qdr:${v}`; // d | w | m
   }
 
+  // main.js
   function gUrl(q) {
-    // Force US results & English UI, reduce personalization
-    const hardGeo = '&hl=en&gl=us&cr=countryUS&pws=0';
+    // uule for "United States"
+    const UULE_US = "w+CAIQICINVW5pdGVkIFN0YXRlcw";
+    const hardGeo = `&hl=en&gl=us&cr=countryUS&uule=${UULE_US}&pws=0&nfpr=1`;
     return `https://www.google.com/search?q=${encodeURIComponent(q)}${recencyParam()}${hardGeo}`;
   }
-
 
   function composeLocationFilter() {
     const custom = (qs("#locationCustom")?.value || "").trim();
