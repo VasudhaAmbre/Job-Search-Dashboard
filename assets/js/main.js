@@ -5,6 +5,10 @@ import { PORTALS as RAW_PORTALS, ROLE, DEFAULT_US } from "./config.js";
   // ---------- tiny helpers ----------
   const qs = (s) => document.querySelector(s);
   const qsa = (s) => Array.from(document.querySelectorAll(s));
+  const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
+
+  // Toggle this ONLY if you really need extra freshness terms on 1–3h searches
+  const ENABLE_SOFT_RECENCY = false;
 
   // Robust portals array (fallbacks if config.js is wrong)
   const portals = Array.isArray(RAW_PORTALS) && RAW_PORTALS.length
@@ -191,29 +195,16 @@ import { PORTALS as RAW_PORTALS, ROLE, DEFAULT_US } from "./config.js";
     scheduleRender();
   }
 
+  // Soft text filter for very tight hour windows (kept, but gated)
   function tightRecencyTextFilter() {
     const v = (qs("#recency")?.value || "").trim();
     if (!v || !v.startsWith("h")) return "";
     const hrs = parseInt(v.slice(1), 10);
-    // Only help for very tight windows (≤3 hours)
     if (!Number.isFinite(hrs) || hrs > 3) return "";
     return '("minute ago" OR "minutes ago" OR "hour ago" OR "hours ago" OR "just posted")';
   }
 
-
   // ---------- query composer ----------
-  // function composeQuery(roleBlock, siteFilter) {
-  //   const filters = [];
-  //   const loc = composeLocationFilter();
-  //   if (loc) filters.push(loc);
-  //   qsa(".chip.active").forEach((c) => {
-  //     if (!c.classList.contains("removable")) filters.push(c.dataset.k);
-  //   });
-  //   const extra = (qs("#extra")?.value || "").trim();
-  //   if (extra) filters.push(extra);
-  //   return [roleBlock, ...filters, siteFilter].filter(Boolean).join(" ");
-  // }
-
   function composeQuery(roleBlock, siteFilter) {
     const filters = [];
     const loc = composeLocationFilter();
@@ -226,9 +217,11 @@ import { PORTALS as RAW_PORTALS, ROLE, DEFAULT_US } from "./config.js";
     const extra = (qs("#extra")?.value || "").trim();
     if (extra) filters.push(extra);
 
-    // 👇 Add textual recency cues for tight hour windows
-    const soft = tightRecencyTextFilter();
-    if (soft) filters.push(soft);
+    // Add textual recency cues only if explicitly enabled
+    if (ENABLE_SOFT_RECENCY) {
+      const soft = tightRecencyTextFilter();
+      if (soft) filters.push(soft);
+    }
 
     return [roleBlock, ...filters, siteFilter].filter(Boolean).join(" ");
   }
@@ -384,7 +377,7 @@ import { PORTALS as RAW_PORTALS, ROLE, DEFAULT_US } from "./config.js";
   }
 
   // ---------- bindings ----------
-  function bind() {
+  async function bind() {
     // chips (quick)
     qsa("#chipsRow .chip").forEach((c) => {
       c.addEventListener("click", () => {
@@ -431,11 +424,17 @@ import { PORTALS as RAW_PORTALS, ROLE, DEFAULT_US } from "./config.js";
     ["roleSRE","roleDevOps","roleCloud","roleApigee","recency","extra","locationCustom"]
       .forEach((id) => qs("#" + id)?.addEventListener("change", scheduleRender));
 
-    // open selected
-    qs("#openSelectedBtn")?.addEventListener("click", () => {
+    // open selected (throttled, jittered)
+    qs("#openSelectedBtn")?.addEventListener("click", async () => {
       const idxs = getTargetPortalIndexes();
       const list = buildQueriesForIndexes(idxs);
-      list.forEach((item, i) => setTimeout(() => window.open(item.url, "_blank"), i * 120));
+      for (let i = 0; i < list.length; i++) {
+        window.open(list[i].url, "_blank");
+        // 2.2–3.0s delay to avoid rate limiting
+        const jitter = 2200 + Math.floor(Math.random() * 800);
+        // eslint-disable-next-line no-await-in-loop
+        await sleep(jitter);
+      }
     });
 
     // copy all links
@@ -456,23 +455,30 @@ import { PORTALS as RAW_PORTALS, ROLE, DEFAULT_US } from "./config.js";
       });
     }
 
-    // open in batches of 5
+    // open in batches (smaller batch + bigger gaps)
     const openInBatchesBtn = qs("#openInBatchesBtn");
     if (openInBatchesBtn) {
       openInBatchesBtn.addEventListener("click", async () => {
         const idxs = getTargetPortalIndexes();
         const list = buildQueriesForIndexes(idxs);
         if (!list.length) return;
-        const groups = chunk(list, 5);
+        const BATCH = 3; // smaller batch is friendlier to Google
+        const groups = chunk(list, BATCH);
         let batch = 0;
         for (const g of groups) {
-          g.forEach((item, i) => setTimeout(() => window.open(item.url, "_blank"), i * 250));
+          for (const item of g) {
+            window.open(item.url, "_blank");
+            // 1.2–1.8s between links within a batch
+            // eslint-disable-next-line no-await-in-loop
+            await sleep(1200 + Math.floor(Math.random() * 600));
+          }
           batch += 1;
           openInBatchesBtn.textContent = `Opened batch ${batch}/${groups.length}`;
+          // 5–7s pause between batches
           // eslint-disable-next-line no-await-in-loop
-          await new Promise((r) => setTimeout(r, 1100));
+          await sleep(5000 + Math.floor(Math.random() * 2000));
         }
-        setTimeout(() => (openInBatchesBtn.textContent = "Open 5 at a time"), 900);
+        setTimeout(() => (openInBatchesBtn.textContent = "Open 3 at a time"), 1200);
       });
     }
 
