@@ -28,6 +28,7 @@
     <div class="wrap">
       <div class="brand">
         <h1>Job Search Dashboard</h1>
+        <span class="tag">SRE · DevOps · Cloud · Apigee</span>
       </div>
 
       <div class="header-actions">
@@ -81,22 +82,36 @@
             <label class="label" for="recency">Recency:</label>
             <select id="recency">
               <option value="">Any time</option>
+              <!-- Hours 1–24 -->
               <optgroup label="Hours">
                 <option value="h1">Past 1 hour</option>
+                <option value="h2">Past 2 hours</option>
                 <option value="h3">Past 3 hours</option>
+                <option value="h4">Past 4 hours</option>
                 <option value="h5">Past 5 hours</option>
+                <option value="h6">Past 6 hours</option>
                 <option value="h7">Past 7 hours</option>
+                <option value="h8">Past 8 hours</option>
                 <option value="h9">Past 9 hours</option>
+                <option value="h10">Past 10 hours</option>
                 <option value="h11">Past 11 hours</option>
+                <option value="h12">Past 12 hours</option>
                 <option value="h13">Past 13 hours</option>
+                <option value="h14">Past 14 hours</option>
                 <option value="h15">Past 15 hours</option>
+                <option value="h16">Past 16 hours</option>
                 <option value="h17">Past 17 hours</option>
+                <option value="h18">Past 18 hours</option>
                 <option value="h19">Past 19 hours</option>
+                <option value="h20">Past 20 hours</option>
                 <option value="h21">Past 21 hours</option>
+                <option value="h22">Past 22 hours</option>
                 <option value="h23">Past 23 hours</option>
+                <option value="h24">Past 24 hours</option>
               </optgroup>
-              <optgroup label="Days">
-                <option value="d">Past 24 hours</option>
+              <!-- Broader ranges -->
+              <optgroup label="Ranges">
+                <option value="d">Past day</option>
                 <option value="w">Past week</option>
                 <option value="m">Past month</option>
               </optgroup>
@@ -166,7 +181,6 @@
   </main>
 
   <!-- Load the app (main.js imports ./config.js internally) -->
-  <script type="module" src="assets/js/config.js"></script>
   <script type="module" src="assets/js/main.js"></script>
 </body>
 </html>
