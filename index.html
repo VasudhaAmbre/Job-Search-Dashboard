@@ -3,36 +3,31 @@
 <head>
   <meta charset="UTF-8" />
 
-  <!-- ✅ Safe CSP for module-based dashboard -->
-  <meta
-    http-equiv="Content-Security-Policy"
-    content="
-      default-src 'self';
-      script-src 'self' 'unsafe-inline' 'unsafe-eval' https://cdn.jsdelivr.net https://unpkg.com;
-      style-src 'self' 'unsafe-inline' https://fonts.googleapis.com https://cdn.jsdelivr.net;
-      font-src 'self' https://fonts.gstatic.com https://cdn.jsdelivr.net;
-      img-src 'self' data: https:;
-      connect-src 'self';
-      frame-ancestors 'none';
-      base-uri 'self';
-      form-action 'self';
-      upgrade-insecure-requests;
-    "
-  />
+  <!-- ✅ CSP tuned for ES modules and your CDNs -->
+  <meta http-equiv="Content-Security-Policy" content="
+    default-src 'self';
+    script-src 'self' 'unsafe-inline' 'unsafe-eval' https://cdn.jsdelivr.net https://unpkg.com;
+    style-src  'self' 'unsafe-inline' https://fonts.googleapis.com https://cdn.jsdelivr.net;
+    font-src   'self' https://fonts.gstatic.com https://cdn.jsdelivr.net;
+    img-src    'self' data: https:;
+    connect-src 'self';
+    frame-ancestors 'none';
+    base-uri 'self';
+    form-action 'self';
+    upgrade-insecure-requests;
+  ">
 
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>Job Search Dashboard</title>
   <link rel="stylesheet" href="assets/css/style.css" />
 </head>
 <body class="dark">
-  <!-- ✅ Skip link for keyboard users -->
   <a href="#resultsGrid" class="skip-link">Skip to results</a>
 
   <header class="app-header">
     <div class="wrap">
       <div class="brand">
         <h1>Job Search Dashboard</h1>
-        <span class="tag">SRE · DevOps · Cloud · Apigee</span>
       </div>
 
       <div class="header-actions">
@@ -42,15 +37,15 @@
           <span id="locationsBadge" class="badge muted">US</span>
         </div>
         <label class="switch">
-          <input type="checkbox" id="darkToggle" checked>
+          <input type="checkbox" id="darkToggle" checked />
           <span>Dark mode</span>
         </label>
         <label class="switch">
-          <input type="checkbox" id="highContrastToggle">
+          <input type="checkbox" id="highContrastToggle" />
           <span>High contrast</span>
         </label>
         <label class="switch">
-          <input type="checkbox" id="reduceMotionToggle">
+          <input type="checkbox" id="reduceMotionToggle" />
           <span>Reduce motion</span>
         </label>
       </div>
@@ -58,26 +53,24 @@
   </header>
 
   <main class="wrap">
-    <!-- Hero search (Indeed-style) -->
     <section class="hero-search card" role="region" aria-labelledby="heroTitle">
       <h2 id="heroTitle" class="sr-only">Search filters</h2>
 
-      <!-- ✅ Wrapped hero search in a form -->
       <form id="searchForm" class="search-form">
         <div class="search-box">
           <div class="field">
             <label for="extra">What</label>
-            <input type="text" id="extra" placeholder='Keywords (e.g., "Kubernetes" OR "Azure")'>
+            <input id="extra" type="text" placeholder='Keywords (e.g., "Kubernetes" OR "Azure")' />
           </div>
           <div class="field">
             <label for="locationCustom">Where</label>
-            <input type="text" id="locationCustom" placeholder='Custom (e.g., "Boston" OR "Seattle")'>
+            <input id="locationCustom" type="text" placeholder='Custom (e.g., "Boston" OR "Seattle")' />
           </div>
-          <button type="submit" class="btn" id="applyBtn">Search</button>
+          <button id="applyBtn" class="btn" type="submit">Search</button>
         </div>
 
         <div class="quick-row">
-          <div class="chips large" id="chipsRow">
+          <div id="chipsRow" class="chips large">
             <span class="chip" data-k='("remote" OR "hybrid")'>Remote / Hybrid</span>
             <span class="chip" data-k='"sponsorship" OR "H1B"'>Sponsorship / H1B</span>
             <span class="chip" data-k='"entry level" OR "junior"'>Entry / Junior</span>
@@ -108,23 +101,21 @@
                 <option value="m">Past month</option>
               </optgroup>
             </select>
-            <button type="button" class="btn ghost" id="resetBtn">Reset</button>
+            <button id="resetBtn" class="btn ghost" type="button">Reset</button>
           </div>
         </div>
       </form>
     </section>
 
-    <!-- Main split layout -->
     <section class="layout">
-      <!-- Sidebar filters -->
       <aside class="sidebar card" role="region" aria-labelledby="sidebarTitle">
         <h2 id="sidebarTitle" class="sr-only">Role and location filters</h2>
 
         <h3>Roles</h3>
-        <label><input type="checkbox" id="roleSRE" checked> Site Reliability Engineer</label>
-        <label><input type="checkbox" id="roleDevOps" checked> DevOps</label>
-        <label><input type="checkbox" id="roleCloud" checked> Cloud</label>
-        <label><input type="checkbox" id="roleApigee" checked> Apigee</label>
+        <label><input id="roleSRE" type="checkbox" checked /> Site Reliability Engineer</label>
+        <label><input id="roleDevOps" type="checkbox" checked /> DevOps</label>
+        <label><input id="roleCloud" type="checkbox" checked /> Cloud</label>
+        <label><input id="roleApigee" type="checkbox" checked /> Apigee</label>
 
         <div class="divider"></div>
 
@@ -139,13 +130,12 @@
           <option value='"Florida" OR "FL"'>Florida (FL)</option>
         </select>
         <div class="row">
-          <button id="addSelectedLocations" class="btn ghost mini">Add selected</button>
-          <button id="clearLocations" class="btn ghost mini">Clear</button>
+          <button id="addSelectedLocations" class="btn ghost mini" type="button">Add selected</button>
+          <button id="clearLocations" class="btn ghost mini" type="button">Clear</button>
         </div>
         <div id="locationsChips" class="chips" style="margin-top:8px;"></div>
       </aside>
 
-      <!-- Results -->
       <section class="results" role="region" aria-labelledby="resultsTitle">
         <h2 id="resultsTitle" class="sr-only">Search results</h2>
 
@@ -155,17 +145,15 @@
             <span id="filtersBadge2" class="badge muted">0 filters</span>
             <span id="locationsBadge2" class="badge muted">US</span>
           </div>
-          <button class="btn ghost" id="openSelectedBtn"
-                  title="Open selected portals using the first checked role"
-                  aria-controls="resultsGrid">
+          <button id="openSelectedBtn" class="btn ghost" type="button" aria-controls="resultsGrid">
             Open selected
           </button>
-          <button class="btn ghost" id="copyAllBtn" title="Copy all search links to clipboard">
+          <button id="copyAllBtn" class="btn ghost" type="button" title="Copy all search links to clipboard">
             Copy all links
           </button>
-          <button class="btn ghost" id="openInBatchesBtn" title="Open links in batches of 5 to avoid popup blocking">
+          <button id="openInBatchesBtn" class="btn ghost" type="button" title="Open links in batches of 5">
             Open 5 at a time
-          </button>          
+          </button>
         </div>
 
         <div id="resultsGrid" class="results-grid" tabindex="-1" role="list" aria-label="Portals list"></div>
@@ -177,8 +165,8 @@
     </footer>
   </main>
 
-  <!-- ✅ Place scripts at the bottom for best performance -->
-  <!-- <script type="module" src="assets/js/config.js"></script> -->
+  <!-- Load the app (main.js imports ./config.js internally) -->
+  <script type="module" src="assets/js/config.js"></script>
   <script type="module" src="assets/js/main.js"></script>
 </body>
 </html>
