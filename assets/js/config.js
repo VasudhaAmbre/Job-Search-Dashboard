@@ -12,9 +12,7 @@ export const DEFAULT_US =
   '(("United States" OR "U.S." OR "USA" OR "U.S.A." OR "United States of America") OR ("Remote" AND ("US" OR "USA")))';
 
 // 🔹 Hard exclude common India signals (domains + city names)
-export const NEGATIVE_GEO =
-  ' -site:*.in -site:in.* -"India" -"Bengaluru" -"Bangalore" -"Hyderabad" -"Pune" -"Gurugram" -"Gurgaon" -"Noida" -"Mumbai" -"Chennai" -"New Delhi"';
-
+export const NEGATIVE_GEO = '-site:*.in -site:in.* -"India"';
 
 // 🔹 Master list of job portals / ATS (ordered for optimal coverage)
 export const PORTALS = [
