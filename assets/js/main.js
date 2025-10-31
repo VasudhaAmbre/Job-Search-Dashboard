@@ -1,5 +1,7 @@
 /* Job Search Dashboard — Card Layout (Indeed-style) */
-import { PORTALS as portals, ROLE, DEFAULT_US } from "./config.js";
+// At the top of main.js
+import { PORTALS as portals, ROLE, DEFAULT_US }
+  from "/Job-Search-Dashboard/assets/js/config.js";
 
 (function () {
   const qs = (s) => document.querySelector(s);
@@ -505,7 +507,7 @@ import { PORTALS as portals, ROLE, DEFAULT_US } from "./config.js";
       setDark(!!dark.checked);
       dark.addEventListener("change", () => setDark(dark.checked));
     }
-    
+
     // ===== Saved Searches UI wiring =====
     const saveBtn = qs("#savePresetBtn");
     const loadBtn = qs("#loadPresetBtn");
