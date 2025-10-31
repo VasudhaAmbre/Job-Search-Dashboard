@@ -1,5 +1,6 @@
+// main.js — country-aware, badge updates, safe geo filters
 import { PORTALS as RAW_PORTALS, ROLE, DEFAULT_US, NEGATIVE_GEO } from "./config.js";
-const NEG_GEO = (typeof NEGATIVE_GEO === "string") ? NEGATIVE_GEO : "";
+const NEG_GEO_US = (typeof NEGATIVE_GEO === "string") ? NEGATIVE_GEO : "";
 
 (function () {
   // ---------- tiny helpers ----------
@@ -10,7 +11,51 @@ const NEG_GEO = (typeof NEGATIVE_GEO === "string") ? NEGATIVE_GEO : "";
   // Toggle this ONLY if you really need extra freshness terms on 1–3h searches
   const ENABLE_SOFT_RECENCY = false;
 
-  // Robust portals array (fallbacks if config.js is wrong)
+  // ---------- country config (self-contained fallbacks) ----------
+  // DEFAULT_US comes from config.js; others defined locally
+  const COUNTRY_CFG = {
+    US: {
+      label: "US",
+      defaultLoc: DEFAULT_US || '(("United States") OR US)',
+      google: '&hl=en&gl=us&cr=countryUS&pws=0&nfpr=1',
+      // UULE (encoded "United States") helps bias results toward US
+      uule: 'w+CAIQICINVW5pdGVkIFN0YXRlcw',
+      neg: NEG_GEO_US, // strong India exclusions only in US profile
+    },
+    CA: {
+      label: "CA",
+      defaultLoc: '("Canada" OR CA)',
+      google: '&hl=en&gl=ca&cr=countryCA&pws=0&nfpr=1',
+      uule: null,
+      neg: '', // keep light; different noise patterns per country
+    },
+    UK: {
+      label: "UK",
+      defaultLoc: '("United Kingdom" OR UK OR England OR Scotland OR Wales OR "Northern Ireland")',
+      google: '&hl=en&gl=gb&cr=countryGB&pws=0&nfpr=1',
+      uule: null,
+      neg: '',
+    },
+    EU: {
+      label: "EU",
+      // Broad but practical defaults; you can refine later
+      defaultLoc:
+        '("European Union" OR EU OR Germany OR France OR Spain OR Italy OR Netherlands OR Sweden OR Denmark OR Ireland OR Portugal OR Belgium OR Austria OR Finland OR Poland OR "Czech Republic")',
+      // No cr= across multiple countries; bias via gl (pick one) + neutralize personalization
+      google: '&hl=en&gl=de&pws=0&nfpr=1',
+      uule: null,
+      neg: '',
+    },
+    Remote: {
+      label: "Remote",
+      defaultLoc: '("Remote" OR "Work from anywhere" OR "WFH")',
+      google: '&hl=en&pws=0&nfpr=1',
+      uule: null,
+      neg: '',
+    },
+  };
+
+  // ---------- portals ----------
   const portals = Array.isArray(RAW_PORTALS) && RAW_PORTALS.length
     ? RAW_PORTALS
     : [
@@ -34,12 +79,19 @@ const NEG_GEO = (typeof NEGATIVE_GEO === "string") ? NEGATIVE_GEO : "";
   // ---------- storage ----------
   const STORAGE_KEY = "jsdash_v1";
 
+  function getCountryKey() {
+    const sel = qs("#country");
+    const v = (sel?.value || "US").trim();
+    return COUNTRY_CFG[v] ? v : "US";
+  }
+
   function serializeState() {
     const chipsActive = qsa("#chipsRow .chip.active")
       .filter((c) => !c.classList.contains("removable"))
       .map((c) => c.dataset.k);
 
     return {
+      country: getCountryKey(),
       recency: qs("#recency")?.value || "",
       extra: qs("#extra")?.value || "",
       custom: qs("#locationCustom")?.value || "",
@@ -60,6 +112,11 @@ const NEG_GEO = (typeof NEGATIVE_GEO === "string") ? NEGATIVE_GEO : "";
   function deserializeState(state, { partial = false } = {}) {
     if (!state || typeof state !== "object") return;
     const has = (k) => Object.prototype.hasOwnProperty.call(state, k);
+
+    if (!partial || has("country")) {
+      if (qs("#country")) qs("#country").value = COUNTRY_CFG[state.country] ? state.country : "US";
+      updateCountryBadges();
+    }
 
     if (!partial || has("recency")) { if (qs("#recency")) qs("#recency").value = state.recency ?? ""; }
     if (!partial || has("extra"))   { if (qs("#extra")) qs("#extra").value = state.extra ?? ""; }
@@ -121,13 +178,24 @@ const NEG_GEO = (typeof NEGATIVE_GEO === "string") ? NEGATIVE_GEO : "";
     return `&tbs=qdr:${v}`; // d | w | m
   }
 
-  // main.js
-  function gUrl(q) {
-    const UULE_US = "w+CAIQICINVW5pdGVkIFN0YXRlcw"; // "United States"
-    const hardGeo = `&hl=en&gl=us&cr=countryUS&uule=${UULE_US}&pws=0&nfpr=1`;
-    return `https://www.google.com/search?q=${encodeURIComponent(q)}${recencyParam()}${hardGeo}`;
+  function currentCountryCfg() {
+    return COUNTRY_CFG[getCountryKey()] || COUNTRY_CFG.US;
   }
 
+  function updateCountryBadges() {
+    const cfg = currentCountryCfg();
+    ["#countryBadge", "#countryBadge2"].forEach((id) => {
+      const b = qs(id);
+      if (b) b.textContent = cfg.label;
+    });
+  }
+
+  function gUrl(q) {
+    const cfg = currentCountryCfg();
+    const geo = cfg.google || "&hl=en&pws=0&nfpr=1";
+    const uule = cfg.uule ? `&uule=${cfg.uule}` : "";
+    return `https://www.google.com/search?q=${encodeURIComponent(q)}${recencyParam()}${geo}${uule}`;
+  }
 
   function composeLocationFilter() {
     const custom = (qs("#locationCustom")?.value || "").trim();
@@ -138,7 +206,10 @@ const NEG_GEO = (typeof NEGATIVE_GEO === "string") ? NEGATIVE_GEO : "";
       const groups = locations.map(g => `(${g})`);
       return `(${groups.join(" OR ")})`;
     }
-    return DEFAULT_US;
+
+    // Country default when no custom/selected locations
+    const cfg = currentCountryCfg();
+    return cfg.defaultLoc;
   }
 
   function activeFiltersCount() {
@@ -146,7 +217,10 @@ const NEG_GEO = (typeof NEGATIVE_GEO === "string") ? NEGATIVE_GEO : "";
     const extra = (qs("#extra")?.value || "").trim() ? 1 : 0;
     return chips + extra;
   }
+
   function updateBadges() {
+    updateCountryBadges();
+
     const r = (qs("#recency")?.value || "");
     const rText = r
       ? (r.startsWith("h")
@@ -166,7 +240,8 @@ const NEG_GEO = (typeof NEGATIVE_GEO === "string") ? NEGATIVE_GEO : "";
 
     const L = locations.length;
     const hasCustom = (qs("#locationCustom")?.value || "").trim();
-    const text = hasCustom ? "Custom" : (L ? `${L} location${L > 1 ? "s" : ""}` : "US");
+    const countryLabel = currentCountryCfg().label;
+    const text = hasCustom ? "Custom" : (L ? `${L} location${L > 1 ? "s" : ""}` : countryLabel);
     ["#locationsBadge", "#locationsBadge2"].forEach((id) => {
       const b = qs(id); if (b) { b.textContent = text; b.classList.toggle("muted", !L && !hasCustom); }
     });
@@ -227,11 +302,10 @@ const NEG_GEO = (typeof NEGATIVE_GEO === "string") ? NEGATIVE_GEO : "";
       if (soft) filters.push(soft);
     }
 
-    // Always add hard geo exclusions
-    const q = [roleBlock, ...filters, siteFilter].filter(Boolean).join(" ");
-    return `${q} ${NEG_GEO}`.trim();
+    const countryNeg = (currentCountryCfg().neg || '').trim();
+    const base = [roleBlock, ...filters, siteFilter].filter(Boolean).join(" ");
+    return countryNeg ? `${base} ${countryNeg}`.trim() : base;
   }
-
 
   function firstCheckedRoleBlock() {
     if (qs("#roleSRE")?.checked) return ROLE.SRE;
@@ -391,6 +465,13 @@ const NEG_GEO = (typeof NEGATIVE_GEO === "string") ? NEGATIVE_GEO : "";
         c.classList.toggle("active");
         scheduleRender();
       });
+    });
+
+    // country change
+    qs("#country")?.addEventListener("change", () => {
+      updateCountryBadges();
+      scheduleRender();
+      saveState();
     });
 
     // form submit
@@ -554,10 +635,14 @@ const NEG_GEO = (typeof NEGATIVE_GEO === "string") ? NEGATIVE_GEO : "";
       const prefersReduce = window.matchMedia?.("(prefers-reduced-motion: reduce)")?.matches;
       if (qs("#reduceMotionToggle")) qs("#reduceMotionToggle").checked = !!prefersReduce;
       document.body.classList.toggle("reduce-motion", !!prefersReduce);
+
+      // Default country = US
+      if (qs("#country")) qs("#country").value = "US";
     } else {
       loadState();
     }
 
+    updateCountryBadges();
     renderLocationChips();
     bind();
     renderCards();

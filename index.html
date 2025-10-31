@@ -37,6 +37,20 @@
           <span id="filtersBadge" class="badge muted">0 filters</span>
           <span id="locationsBadge" class="badge muted">US</span>
         </div>
+
+        <!-- ⭐ Country selector (header) -->
+        <div class="country-wrap">
+          <label for="country" class="sr-only">Country</label>
+          <select id="country" aria-label="Country">
+            <option value="US" selected>United States</option>
+            <option value="CA">Canada</option>
+            <option value="UK">United Kingdom</option>
+            <option value="EU">European Union</option>
+            <option value="Remote">Remote (Global)</option>
+          </select>
+          <span id="countryBadge" class="badge country">US</span>
+        </div>
+
         <label class="switch">
           <input type="checkbox" id="darkToggle" checked />
           <span>Dark mode</span>
@@ -63,10 +77,14 @@
             <label for="extra">What</label>
             <input id="extra" type="text" placeholder='Keywords (e.g., "Kubernetes" OR "Azure")' />
           </div>
+
           <div class="field">
             <label for="locationCustom">Where</label>
             <input id="locationCustom" type="text" placeholder='Custom (e.g., "Boston" OR "Seattle")' />
           </div>
+
+          <!-- (Country select moved to header) -->
+
           <button id="applyBtn" class="btn" type="submit">Search</button>
         </div>
 
@@ -157,6 +175,7 @@
 
         <div class="results-toolbar" role="toolbar" aria-label="Results actions">
           <div class="badges" aria-live="polite">
+            <span id="countryBadge2" class="badge country">US</span>
             <span id="recencyBadge2" class="badge">Any time</span>
             <span id="filtersBadge2" class="badge muted">0 filters</span>
             <span id="locationsBadge2" class="badge muted">US</span>

@@ -7,12 +7,53 @@ export const ROLE = {
   Observability: '("Observability Engineer" OR "Monitoring Engineer" OR "Telemetry Engineer" OR "SRE Observability" OR "Platform Observability" OR "Monitoring")',
 };
 
-// 🔹 Default fallback when no custom/selected chips
-export const DEFAULT_US =
-  '(("United States" OR "U.S." OR "USA" OR "U.S.A." OR "United States of America") OR ("Remote" AND ("US" OR "USA")))';
+  // 🔹 Default fallback when no custom/selected chips
+  export const DEFAULT_US =
+    '(("United States" OR "U.S." OR "USA" OR "U.S.A." OR "United States of America") OR ("Remote" AND ("US" OR "USA")))';
 
-// 🔹 Hard exclude common India signals (domains + city names)
-export const NEGATIVE_GEO = '-site:*.in -site:in.* -"India"';
+  // 🔹 Hard negative filter you can append to queries (lightweight by default)
+  export const NEGATIVE_GEO = '-site:*.in -site:in.* -"India"';
+
+  // 🔹 Country presets (display label + query filter + Google params)
+  //    main.js will read these in the next step when we wire the selector.
+  export const COUNTRY_PRESETS = {
+    US: {
+      label: "United States",
+      query: '("United States" OR US)',
+      gl: "us",                 // Google UI geo
+      cr: "countryUS",          // Country restrict
+      neg: NEGATIVE_GEO,        // keep India noise out
+    },
+    CA: {
+      label: "Canada",
+      query: '("Canada" OR CA)',
+      gl: "ca",
+      cr: "countryCA",
+      neg: '',                  // keep simple for now
+    },
+    UK: {
+      label: "United Kingdom",
+      query: '("United Kingdom" OR UK)',
+      gl: "uk",
+      cr: "countryUK",
+      neg: '',
+    },
+    EU: {
+      label: "European Union",
+      // Broad EU catch — you can tighten later by country list if you like
+      query: '(EU OR "European Union" OR Europe)',
+      gl: "de",
+      cr: "",                   // no single country code; we’ll rely on query text
+      neg: '',
+    },
+    Remote: {
+      label: "Remote (Global)",
+      query: '("Remote" OR "Work from anywhere" OR "Worldwide")',
+      gl: "us",
+      cr: "",
+      neg: '',
+    },
+  };
 
 // 🔹 Master list of job portals / ATS (ordered for optimal coverage)
 export const PORTALS = [

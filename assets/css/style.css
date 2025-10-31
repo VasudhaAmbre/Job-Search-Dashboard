@@ -341,3 +341,59 @@ body.reduce-motion * {
 
 /* Ensure results area always has some height so the page doesn’t feel empty while rendering */
 .results-grid{ min-height: 140px; }
+/* ===== Country selector & badges ===== */
+.country-wrap,
+.header-actions .country-wrap {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+}
+
+#country {
+  min-width: 140px;
+  background: var(--card);
+  color: var(--fg);
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  padding: 8px 12px;
+  font-size: 14px;
+}
+#country:focus {
+  outline: none;
+  border-color: #93c5fd;
+  box-shadow: 0 0 0 3px rgba(147,197,253,.35);
+}
+
+/* Keep country badges consistent with others, but slightly stronger */
+.badge.country {
+  background: var(--accent);
+  border-color: #93c5fd;
+  font-weight: 700;
+}
+
+/* ===== Role button polish (copy button alignment) ===== */
+.role-btn .mini {
+  border: 1px solid var(--line);
+  background: transparent;
+  color: var(--fg);
+  padding: 6px 8px;
+  border-radius: 8px;
+  font-weight: 600;
+}
+.role-btn .mini:hover { filter: brightness(.96); }
+
+/* ===== Results grid: 2→3 columns on wide screens ===== */
+@media (min-width: 1280px) {
+  .results-grid {
+    grid-template-columns: repeat(3, minmax(300px, 1fr));
+  }
+}
+
+/* ===== Dark-mode form controls ===== */
+.dark select, .dark input[type="text"] {
+  background: #0b1426;
+  border-color: var(--line);
+}
+
+/* Make sure the results area never collapses while rendering */
+.results-grid { min-height: 180px; }
