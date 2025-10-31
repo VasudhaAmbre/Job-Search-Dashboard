@@ -1,61 +1,23 @@
-// main.js — country-aware, badge updates, safe geo filters
-import { PORTALS as RAW_PORTALS, ROLE, DEFAULT_US, NEGATIVE_GEO } from "./config.js";
-const NEG_GEO_US = (typeof NEGATIVE_GEO === "string") ? NEGATIVE_GEO : "";
+/* Job Search Dashboard — main.js (cards <-> table + country selector) */
+import {
+  PORTALS as RAW_PORTALS,
+  ROLE,
+  DEFAULT_US,
+  NEGATIVE_GEO,
+  COUNTRY, // { code: { hl, gl, cr, uule, label, defaultQuery } }
+} from "./config.js";
+
+const NEG_GEO = (typeof NEGATIVE_GEO === "string") ? NEGATIVE_GEO : "";
 
 (function () {
   // ---------- tiny helpers ----------
-  const qs = (s) => document.querySelector(s);
+  const qs  = (s) => document.querySelector(s);
   const qsa = (s) => Array.from(document.querySelectorAll(s));
   const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
 
-  // Toggle this ONLY if you really need extra freshness terms on 1–3h searches
   const ENABLE_SOFT_RECENCY = false;
 
-  // ---------- country config (self-contained fallbacks) ----------
-  // DEFAULT_US comes from config.js; others defined locally
-  const COUNTRY_CFG = {
-    US: {
-      label: "US",
-      defaultLoc: DEFAULT_US || '(("United States") OR US)',
-      google: '&hl=en&gl=us&cr=countryUS&pws=0&nfpr=1',
-      // UULE (encoded "United States") helps bias results toward US
-      uule: 'w+CAIQICINVW5pdGVkIFN0YXRlcw',
-      neg: NEG_GEO_US, // strong India exclusions only in US profile
-    },
-    CA: {
-      label: "CA",
-      defaultLoc: '("Canada" OR CA)',
-      google: '&hl=en&gl=ca&cr=countryCA&pws=0&nfpr=1',
-      uule: null,
-      neg: '', // keep light; different noise patterns per country
-    },
-    UK: {
-      label: "UK",
-      defaultLoc: '("United Kingdom" OR UK OR England OR Scotland OR Wales OR "Northern Ireland")',
-      google: '&hl=en&gl=gb&cr=countryGB&pws=0&nfpr=1',
-      uule: null,
-      neg: '',
-    },
-    EU: {
-      label: "EU",
-      // Broad but practical defaults; you can refine later
-      defaultLoc:
-        '("European Union" OR EU OR Germany OR France OR Spain OR Italy OR Netherlands OR Sweden OR Denmark OR Ireland OR Portugal OR Belgium OR Austria OR Finland OR Poland OR "Czech Republic")',
-      // No cr= across multiple countries; bias via gl (pick one) + neutralize personalization
-      google: '&hl=en&gl=de&pws=0&nfpr=1',
-      uule: null,
-      neg: '',
-    },
-    Remote: {
-      label: "Remote",
-      defaultLoc: '("Remote" OR "Work from anywhere" OR "WFH")',
-      google: '&hl=en&pws=0&nfpr=1',
-      uule: null,
-      neg: '',
-    },
-  };
-
-  // ---------- portals ----------
+  // Robust portals array (fallbacks if config.js is wrong)
   const portals = Array.isArray(RAW_PORTALS) && RAW_PORTALS.length
     ? RAW_PORTALS
     : [
@@ -69,21 +31,17 @@ const NEG_GEO_US = (typeof NEGATIVE_GEO === "string") ? NEGATIVE_GEO : "";
   let renderTimer;
   function scheduleRender() {
     clearTimeout(renderTimer);
-    renderTimer = setTimeout(renderCards, 120);
+    renderTimer = setTimeout(render, 120);
   }
 
   // ---------- state ----------
   let locations = []; // removable chips strings
   let focusResultsNextRender = false;
+  let viewMode = "cards";           // "cards" | "table"
+  let countryCode = "US";           // one of keys in COUNTRY
 
   // ---------- storage ----------
   const STORAGE_KEY = "jsdash_v1";
-
-  function getCountryKey() {
-    const sel = qs("#country");
-    const v = (sel?.value || "US").trim();
-    return COUNTRY_CFG[v] ? v : "US";
-  }
 
   function serializeState() {
     const chipsActive = qsa("#chipsRow .chip.active")
@@ -91,32 +49,28 @@ const NEG_GEO_US = (typeof NEGATIVE_GEO === "string") ? NEGATIVE_GEO : "";
       .map((c) => c.dataset.k);
 
     return {
-      country: getCountryKey(),
-      recency: qs("#recency")?.value || "",
-      extra: qs("#extra")?.value || "",
-      custom: qs("#locationCustom")?.value || "",
+      recency:  qs("#recency")?.value || "",
+      extra:    qs("#extra")?.value || "",
+      custom:   qs("#locationCustom")?.value || "",
       locations: locations.slice(0, 50),
       chips: chipsActive,
       roles: {
-        sre: !!qs("#roleSRE")?.checked,
+        sre:    !!qs("#roleSRE")?.checked,
         devops: !!qs("#roleDevOps")?.checked,
-        cloud: !!qs("#roleCloud")?.checked,
+        cloud:  !!qs("#roleCloud")?.checked,
         apigee: !!qs("#roleApigee")?.checked,
       },
-      dark: !!qs("#darkToggle")?.checked,
-      highContrast: !!qs("#highContrastToggle")?.checked,
-      reduceMotion: !!qs("#reduceMotionToggle")?.checked,
+      dark:          !!qs("#darkToggle")?.checked,
+      highContrast:  !!qs("#highContrastToggle")?.checked,
+      reduceMotion:  !!qs("#reduceMotionToggle")?.checked,
+      viewMode,
+      country: countryCode,
     };
   }
 
   function deserializeState(state, { partial = false } = {}) {
     if (!state || typeof state !== "object") return;
     const has = (k) => Object.prototype.hasOwnProperty.call(state, k);
-
-    if (!partial || has("country")) {
-      if (qs("#country")) qs("#country").value = COUNTRY_CFG[state.country] ? state.country : "US";
-      updateCountryBadges();
-    }
 
     if (!partial || has("recency")) { if (qs("#recency")) qs("#recency").value = state.recency ?? ""; }
     if (!partial || has("extra"))   { if (qs("#extra")) qs("#extra").value = state.extra ?? ""; }
@@ -136,9 +90,9 @@ const NEG_GEO_US = (typeof NEGATIVE_GEO === "string") ? NEGATIVE_GEO : "";
     if (!partial || has("roles")) {
       if (state.roles) {
         if (qs("#roleSRE"))    qs("#roleSRE").checked = !!state.roles.sre;
-        if (qs("#roleDevOps"))  qs("#roleDevOps").checked = !!state.roles.devops;
-        if (qs("#roleCloud"))   qs("#roleCloud").checked = !!state.roles.cloud;
-        if (qs("#roleApigee"))  qs("#roleApigee").checked = !!state.roles.apigee;
+        if (qs("#roleDevOps")) qs("#roleDevOps").checked = !!state.roles.devops;
+        if (qs("#roleCloud"))  qs("#roleCloud").checked  = !!state.roles.cloud;
+        if (qs("#roleApigee")) qs("#roleApigee").checked = !!state.roles.apigee;
       }
     }
 
@@ -156,6 +110,23 @@ const NEG_GEO_US = (typeof NEGATIVE_GEO === "string") ? NEGATIVE_GEO : "";
       const on = !!state.reduceMotion;
       if (qs("#reduceMotionToggle")) qs("#reduceMotionToggle").checked = on;
       document.body.classList.toggle("reduce-motion", on);
+    }
+
+    if (!partial || has("viewMode")) {
+      viewMode = state.viewMode === "table" ? "table" : "cards";
+      const cardsRB = qs("#viewCards"), tableRB = qs("#viewTable");
+      if (cardsRB && tableRB) {
+        cardsRB.checked = viewMode === "cards";
+        tableRB.checked = viewMode === "table";
+      }
+    }
+
+    if (!partial || has("country")) {
+      const code = state.country && COUNTRY[state.country] ? state.country : "US";
+      countryCode = code;
+      const sel = qs("#country");
+      if (sel) sel.value = countryCode;
+      updateCountryBadges();
     }
   }
 
@@ -178,38 +149,27 @@ const NEG_GEO_US = (typeof NEGATIVE_GEO === "string") ? NEGATIVE_GEO : "";
     return `&tbs=qdr:${v}`; // d | w | m
   }
 
-  function currentCountryCfg() {
-    return COUNTRY_CFG[getCountryKey()] || COUNTRY_CFG.US;
-  }
-
-  function updateCountryBadges() {
-    const cfg = currentCountryCfg();
-    ["#countryBadge", "#countryBadge2"].forEach((id) => {
-      const b = qs(id);
-      if (b) b.textContent = cfg.label;
-    });
-  }
-
+  // Build a Google URL honoring the selected country
   function gUrl(q) {
-    const cfg = currentCountryCfg();
-    const geo = cfg.google || "&hl=en&pws=0&nfpr=1";
-    const uule = cfg.uule ? `&uule=${cfg.uule}` : "";
-    return `https://www.google.com/search?q=${encodeURIComponent(q)}${recencyParam()}${geo}${uule}`;
+    const C = COUNTRY[countryCode] || COUNTRY.US;
+    const hardGeo =
+      `&hl=${encodeURIComponent(C.hl)}&gl=${encodeURIComponent(C.gl)}${C.cr ? `&cr=${encodeURIComponent(C.cr)}` : ""}` +
+      `${C.uule ? `&uule=${encodeURIComponent(C.uule)}` : ""}&pws=0&nfpr=1`;
+    return `https://www.google.com/search?q=${encodeURIComponent(q)}${recencyParam()}${hardGeo}`;
   }
 
   function composeLocationFilter() {
     const custom = (qs("#locationCustom")?.value || "").trim();
     if (custom) return `(${custom})`;
 
-    // Wrap each location group in its own () and join with OR
     if (locations.length) {
       const groups = locations.map(g => `(${g})`);
       return `(${groups.join(" OR ")})`;
     }
 
-    // Country default when no custom/selected locations
-    const cfg = currentCountryCfg();
-    return cfg.defaultLoc;
+    // Country default query (e.g., US remote bias) if provided; else DEFAULT_US
+    const C = COUNTRY[countryCode] || COUNTRY.US;
+    return C.defaultQuery || DEFAULT_US;
   }
 
   function activeFiltersCount() {
@@ -219,8 +179,6 @@ const NEG_GEO_US = (typeof NEGATIVE_GEO === "string") ? NEGATIVE_GEO : "";
   }
 
   function updateBadges() {
-    updateCountryBadges();
-
     const r = (qs("#recency")?.value || "");
     const rText = r
       ? (r.startsWith("h")
@@ -240,10 +198,17 @@ const NEG_GEO_US = (typeof NEGATIVE_GEO === "string") ? NEGATIVE_GEO : "";
 
     const L = locations.length;
     const hasCustom = (qs("#locationCustom")?.value || "").trim();
-    const countryLabel = currentCountryCfg().label;
-    const text = hasCustom ? "Custom" : (L ? `${L} location${L > 1 ? "s" : ""}` : countryLabel);
+    const text = hasCustom ? "Custom" : (L ? `${L} location${L > 1 ? "s" : ""}` : (COUNTRY[countryCode]?.label || "US"));
     ["#locationsBadge", "#locationsBadge2"].forEach((id) => {
       const b = qs(id); if (b) { b.textContent = text; b.classList.toggle("muted", !L && !hasCustom); }
+    });
+  }
+
+  function updateCountryBadges() {
+    const label = COUNTRY[countryCode]?.label || countryCode;
+    ["#countryBadge", "#countryBadge2"].forEach((id) => {
+      const b = qs(id);
+      if (b) b.textContent = label;
     });
   }
 
@@ -302,15 +267,14 @@ const NEG_GEO_US = (typeof NEGATIVE_GEO === "string") ? NEGATIVE_GEO : "";
       if (soft) filters.push(soft);
     }
 
-    const countryNeg = (currentCountryCfg().neg || '').trim();
-    const base = [roleBlock, ...filters, siteFilter].filter(Boolean).join(" ");
-    return countryNeg ? `${base} ${countryNeg}`.trim() : base;
+    const q = [roleBlock, ...filters, siteFilter].filter(Boolean).join(" ");
+    return `${q} ${NEG_GEO}`.trim();
   }
 
   function firstCheckedRoleBlock() {
-    if (qs("#roleSRE")?.checked) return ROLE.SRE;
+    if (qs("#roleSRE")?.checked)   return ROLE.SRE;
     if (qs("#roleDevOps")?.checked) return ROLE.DevOps;
-    if (qs("#roleCloud")?.checked) return ROLE.Cloud;
+    if (qs("#roleCloud")?.checked)  return ROLE.Cloud;
     if (qs("#roleApigee")?.checked) return ROLE.Apigee;
     return ROLE.SRE;
   }
@@ -321,15 +285,16 @@ const NEG_GEO_US = (typeof NEGATIVE_GEO === "string") ? NEGATIVE_GEO : "";
     for (let i = 0; i < arr.length; i += size) out.push(arr.slice(i, i + size));
     return out;
   }
+
+  // Works for both cards & table views — relies on order of .rowSelect
   function getTargetPortalIndexes() {
-    const cards = Array.from(document.querySelectorAll(".portal-card"));
+    const checkboxes = qsa(".rowSelect");
+    if (!checkboxes.length) return portals.map((_, i) => i);
     const idxs = [];
-    cards.forEach((card, idx) => {
-      const cb = card.querySelector(".rowSelect");
-      if (cb && cb.checked) idxs.push(idx);
-    });
-    return idxs.length ? idxs : cards.map((_, i) => i);
+    checkboxes.forEach((cb, i) => { if (cb.checked) idxs.push(i); });
+    return idxs.length ? idxs : portals.map((_, i) => i);
   }
+
   function buildQueriesForIndexes(idxs) {
     const roleBlock = firstCheckedRoleBlock();
     const list = [];
@@ -342,10 +307,31 @@ const NEG_GEO_US = (typeof NEGATIVE_GEO === "string") ? NEGATIVE_GEO : "";
     return list;
   }
 
-  // ---------- renderer ----------
-  function renderCards() {
+  // ---------- renderer: unified ----------
+  function render() {
     updateBadges();
+    updateCountryBadges();
 
+    if (viewMode === "table") {
+      qs("#resultsGrid")?.setAttribute("hidden", "true");
+      qs("#resultsTableWrap")?.removeAttribute("hidden");
+      renderTable();
+    } else {
+      qs("#resultsTableWrap")?.setAttribute("hidden", "true");
+      const grid = qs("#resultsGrid");
+      if (grid) grid.removeAttribute("hidden");
+      renderCards();
+    }
+
+    if (focusResultsNextRender) {
+      focusResultsNextRender = false;
+      (viewMode === "table" ? qs("#resultsTableWrap") : qs("#resultsGrid"))?.focus();
+    }
+    saveState();
+  }
+
+  // ---------- renderer: cards (existing) ----------
+  function renderCards() {
     const grid = qs("#resultsGrid");
     if (!grid) return;
 
@@ -414,9 +400,9 @@ const NEG_GEO_US = (typeof NEGATIVE_GEO === "string") ? NEGATIVE_GEO : "";
         roleRow.appendChild(a);
       };
 
-      if (qs("#roleSRE")?.checked) addRoleButton("SRE", ROLE.SRE);
+      if (qs("#roleSRE")?.checked)    addRoleButton("SRE",    ROLE.SRE);
       if (qs("#roleDevOps")?.checked) addRoleButton("DevOps", ROLE.DevOps);
-      if (qs("#roleCloud")?.checked) addRoleButton("Cloud", ROLE.Cloud);
+      if (qs("#roleCloud")?.checked)  addRoleButton("Cloud",  ROLE.Cloud);
       if (qs("#roleApigee")?.checked) addRoleButton("Apigee", ROLE.Apigee);
 
       const body = document.createElement("div");
@@ -448,13 +434,103 @@ const NEG_GEO_US = (typeof NEGATIVE_GEO === "string") ? NEGATIVE_GEO : "";
     });
 
     grid.appendChild(frag);
+  }
 
-    saveState();
+  // ---------- renderer: table (new) ----------
+  function renderTable() {
+    const wrap = qs("#resultsTableWrap");
+    if (!wrap) return;
 
-    if (focusResultsNextRender) {
-      focusResultsNextRender = false;
-      grid.focus();
-    }
+    wrap.innerHTML = "";
+    const table = document.createElement("table");
+    table.className = "results-table";
+    table.setAttribute("role", "table");
+
+    table.innerHTML = `
+      <thead role="rowgroup">
+        <tr role="row">
+          <th role="columnheader" style="width:36px;"></th>
+          <th role="columnheader" class="col-portal">Job Portals</th>
+          <th role="columnheader">DevOps</th>
+          <th role="columnheader">SRE</th>
+          <th role="columnheader">Cloud</th>
+          <th role="columnheader">Apigee</th>
+          <th role="columnheader" style="width:72px;">Select</th>
+          <th role="columnheader" style="width:72px;">Open</th>
+        </tr>
+      </thead>
+    `;
+
+    const tbody = document.createElement("tbody");
+    tbody.setAttribute("role", "rowgroup");
+
+    const makeCell = (label, roleBlock, site) => {
+      const q = composeQuery(roleBlock, site);
+      const url = gUrl(q);
+      const td = document.createElement("td");
+      const div = document.createElement("div");
+      div.className = "cell-actions";
+      const a = document.createElement("a");
+      a.href = url; a.target = "_blank"; a.rel = "noopener";
+      a.textContent = label;
+      const btn = document.createElement("button");
+      btn.className = "mini";
+      btn.textContent = "Copy";
+      btn.addEventListener("click", (e) => {
+        e.preventDefault();
+        navigator.clipboard.writeText(q).then(() => {
+          btn.textContent = "Copied!";
+          setTimeout(() => (btn.textContent = "Copy"), 900);
+        });
+      });
+      div.appendChild(a); div.appendChild(btn);
+      td.appendChild(div);
+      return td;
+    };
+
+    portals.forEach((p, idx) => {
+      if (!p || !p.name || !p.site) return;
+
+      const tr = document.createElement("tr");
+      tr.setAttribute("role", "row");
+
+      const tdIdx = document.createElement("td");
+      tdIdx.textContent = String(idx + 1);
+      tdIdx.style.color = "var(--muted)";
+      tr.appendChild(tdIdx);
+
+      const tdPortal = document.createElement("td");
+      tdPortal.className = "col-portal";
+      tdPortal.innerHTML = `${p.name}<div class="domain" style="font-weight:400;color:var(--muted);font-size:12px">${p.domain || ""}</div>`;
+      tr.appendChild(tdPortal);
+
+      tr.appendChild(makeCell("DevOps", ROLE.DevOps, p.site));
+      tr.appendChild(makeCell("SRE",    ROLE.SRE,    p.site));
+      tr.appendChild(makeCell("Cloud",  ROLE.Cloud,  p.site));
+      tr.appendChild(makeCell("Apigee", ROLE.Apigee, p.site));
+
+      const tdSel = document.createElement("td");
+      const cb = document.createElement("input");
+      cb.type = "checkbox"; cb.className = "rowSelect";
+      tdSel.appendChild(cb);
+      tr.appendChild(tdSel);
+
+      const tdOpen = document.createElement("td");
+      const open = document.createElement("button");
+      open.className = "btn ghost mini";
+      open.textContent = "Open";
+      open.addEventListener("click", () => {
+        const q = composeQuery(firstCheckedRoleBlock(), p.site);
+        window.open(gUrl(q), "_blank");
+      });
+      tdOpen.appendChild(open);
+      tr.appendChild(tdOpen);
+
+      tbody.appendChild(tr);
+    });
+
+    table.appendChild(tbody);
+    wrap.appendChild(table);
   }
 
   // ---------- bindings ----------
@@ -465,13 +541,6 @@ const NEG_GEO_US = (typeof NEGATIVE_GEO === "string") ? NEGATIVE_GEO : "";
         c.classList.toggle("active");
         scheduleRender();
       });
-    });
-
-    // country change
-    qs("#country")?.addEventListener("change", () => {
-      updateCountryBadges();
-      scheduleRender();
-      saveState();
     });
 
     // form submit
@@ -512,13 +581,29 @@ const NEG_GEO_US = (typeof NEGATIVE_GEO === "string") ? NEGATIVE_GEO : "";
     ["roleSRE","roleDevOps","roleCloud","roleApigee","recency","extra","locationCustom"]
       .forEach((id) => qs("#" + id)?.addEventListener("change", scheduleRender));
 
+    // country selector
+    qs("#country")?.addEventListener("change", (e) => {
+      const val = String(e.target.value || "US");
+      countryCode = COUNTRY[val] ? val : "US";
+      updateCountryBadges();
+      scheduleRender();
+      saveState();
+    });
+
+    // view toggle
+    qs("#viewCards")?.addEventListener("change", (e) => {
+      if (e.target.checked) { viewMode = "cards"; saveState(); render(); }
+    });
+    qs("#viewTable")?.addEventListener("change", (e) => {
+      if (e.target.checked) { viewMode = "table"; saveState(); render(); }
+    });
+
     // open selected (throttled, jittered)
     qs("#openSelectedBtn")?.addEventListener("click", async () => {
       const idxs = getTargetPortalIndexes();
       const list = buildQueriesForIndexes(idxs);
       for (let i = 0; i < list.length; i++) {
         window.open(list[i].url, "_blank");
-        // 2.2–3.0s delay to avoid rate limiting
         const jitter = 2200 + Math.floor(Math.random() * 800);
         // eslint-disable-next-line no-await-in-loop
         await sleep(jitter);
@@ -543,30 +628,28 @@ const NEG_GEO_US = (typeof NEGATIVE_GEO === "string") ? NEGATIVE_GEO : "";
       });
     }
 
-    // open in batches (smaller batch + bigger gaps)
+    // open in batches
     const openInBatchesBtn = qs("#openInBatchesBtn");
     if (openInBatchesBtn) {
       openInBatchesBtn.addEventListener("click", async () => {
         const idxs = getTargetPortalIndexes();
         const list = buildQueriesForIndexes(idxs);
         if (!list.length) return;
-        const BATCH = 3; // smaller batch is friendlier to Google
+        const BATCH = 5;
         const groups = chunk(list, BATCH);
         let batch = 0;
         for (const g of groups) {
           for (const item of g) {
             window.open(item.url, "_blank");
-            // 1.2–1.8s between links within a batch
             // eslint-disable-next-line no-await-in-loop
             await sleep(1200 + Math.floor(Math.random() * 600));
           }
           batch += 1;
           openInBatchesBtn.textContent = `Opened batch ${batch}/${groups.length}`;
-          // 5–7s pause between batches
           // eslint-disable-next-line no-await-in-loop
           await sleep(5000 + Math.floor(Math.random() * 2000));
         }
-        setTimeout(() => (openInBatchesBtn.textContent = "Open 3 at a time"), 1200);
+        setTimeout(() => (openInBatchesBtn.textContent = "Open 5 at a time"), 1200);
       });
     }
 
@@ -609,7 +692,7 @@ const NEG_GEO_US = (typeof NEGATIVE_GEO === "string") ? NEGATIVE_GEO : "";
         case "o":
         case "O": e.preventDefault(); qs("#openSelectedBtn")?.click(); break;
         case "g":
-        case "G": e.preventDefault(); qs("#resultsGrid")?.focus(); break;
+        case "G": e.preventDefault(); (viewMode === "table" ? qs("#resultsTableWrap") : qs("#resultsGrid"))?.focus(); break;
         case "d":
         case "D": {
           e.preventDefault();
@@ -636,19 +719,19 @@ const NEG_GEO_US = (typeof NEGATIVE_GEO === "string") ? NEGATIVE_GEO : "";
       if (qs("#reduceMotionToggle")) qs("#reduceMotionToggle").checked = !!prefersReduce;
       document.body.classList.toggle("reduce-motion", !!prefersReduce);
 
-      // Default country = US
-      if (qs("#country")) qs("#country").value = "US";
+      // default country UI
+      const sel = qs("#country");
+      if (sel && COUNTRY[sel.value]) countryCode = sel.value;
+      updateCountryBadges();
     } else {
       loadState();
     }
 
-    updateCountryBadges();
     renderLocationChips();
     bind();
-    renderCards();
+    render();
 
-    // Debug hook if needed
-    (window).DASH = { portals, ROLE, DEFAULT_US };
-    console.log("DASH:init ok — portals:", portals.length);
+    (window).DASH = { portals, ROLE, DEFAULT_US, COUNTRY };
+    console.log("DASH:init ok — portals:", portals.length, "country:", countryCode, "view:", viewMode);
   });
 })();
