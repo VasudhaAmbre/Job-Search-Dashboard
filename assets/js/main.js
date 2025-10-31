@@ -1,7 +1,5 @@
-/* Job Search Dashboard — Card Layout (Indeed-style) */
-// At the top of main.js
-import { PORTALS as portals, ROLE, DEFAULT_US }
-  from "/Job-Search-Dashboard/assets/js/config.js";
+import { PORTALS as portals, ROLE, DEFAULT_US } 
+  from "./config.js";
 
 (function () {
   const qs = (s) => document.querySelector(s);
