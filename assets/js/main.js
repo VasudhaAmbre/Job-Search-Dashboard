@@ -1,5 +1,6 @@
 /* Job Search Dashboard — main.js (minimal, stable) */
-import { PORTALS as RAW_PORTALS, ROLE, DEFAULT_US } from "./config.js";
+import { PORTALS as RAW_PORTALS, ROLE, DEFAULT_US, NEGATIVE_GEO } from "./config.js";
+const NEG_GEO = (typeof NEGATIVE_GEO === "string") ? NEGATIVE_GEO : "";
 
 (function () {
   // ---------- tiny helpers ----------
@@ -228,7 +229,7 @@ import { PORTALS as RAW_PORTALS, ROLE, DEFAULT_US } from "./config.js";
 
     // Always add hard geo exclusions
     const q = [roleBlock, ...filters, siteFilter].filter(Boolean).join(" ");
-    return `${q} ${NEGATIVE_GEO}`;
+    return `${q} ${NEG_GEO}`;
   }
 
 

@@ -1,5 +1,3 @@
-// assets/js/config.js
-
 // 🔹 Role blocks used by main.js to compose Google queries
 export const ROLE = {
   SRE:           '("Site Reliability Engineer" OR SRE)',
