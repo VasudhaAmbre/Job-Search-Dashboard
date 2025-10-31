@@ -119,7 +119,7 @@ import { PORTALS as RAW_PORTALS, ROLE, DEFAULT_US } from "./config.js";
   function gUrl(q) {
     return `https://www.google.com/search?q=${encodeURIComponent(q)}${recencyParam()}`;
   }
-  
+
   function composeLocationFilter() {
     const custom = (qs("#locationCustom")?.value || "").trim();
     if (custom) return `(${custom})`;
@@ -191,18 +191,48 @@ import { PORTALS as RAW_PORTALS, ROLE, DEFAULT_US } from "./config.js";
     scheduleRender();
   }
 
+  function tightRecencyTextFilter() {
+    const v = (qs("#recency")?.value || "").trim();
+    if (!v || !v.startsWith("h")) return "";
+    const hrs = parseInt(v.slice(1), 10);
+    // Only help for very tight windows (≤3 hours)
+    if (!Number.isFinite(hrs) || hrs > 3) return "";
+    return '("minute ago" OR "minutes ago" OR "hour ago" OR "hours ago" OR "just posted")';
+  }
+
+
   // ---------- query composer ----------
+  // function composeQuery(roleBlock, siteFilter) {
+  //   const filters = [];
+  //   const loc = composeLocationFilter();
+  //   if (loc) filters.push(loc);
+  //   qsa(".chip.active").forEach((c) => {
+  //     if (!c.classList.contains("removable")) filters.push(c.dataset.k);
+  //   });
+  //   const extra = (qs("#extra")?.value || "").trim();
+  //   if (extra) filters.push(extra);
+  //   return [roleBlock, ...filters, siteFilter].filter(Boolean).join(" ");
+  // }
+
   function composeQuery(roleBlock, siteFilter) {
     const filters = [];
     const loc = composeLocationFilter();
     if (loc) filters.push(loc);
-    qsa(".chip.active").forEach((c) => {
+
+    qsa(".chip.active").forEach(c => {
       if (!c.classList.contains("removable")) filters.push(c.dataset.k);
     });
+
     const extra = (qs("#extra")?.value || "").trim();
     if (extra) filters.push(extra);
+
+    // 👇 Add textual recency cues for tight hour windows
+    const soft = tightRecencyTextFilter();
+    if (soft) filters.push(soft);
+
     return [roleBlock, ...filters, siteFilter].filter(Boolean).join(" ");
   }
+
   function firstCheckedRoleBlock() {
     if (qs("#roleSRE")?.checked) return ROLE.SRE;
     if (qs("#roleDevOps")?.checked) return ROLE.DevOps;
