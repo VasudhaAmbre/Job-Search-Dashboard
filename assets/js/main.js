@@ -120,9 +120,13 @@ import { PORTALS as RAW_PORTALS, ROLE, DEFAULT_US } from "./config.js";
     if (v.startsWith("h")) return `&tbs=qdr:h${v.substring(1)}`;
     return `&tbs=qdr:${v}`; // d | w | m
   }
+
   function gUrl(q) {
-    return `https://www.google.com/search?q=${encodeURIComponent(q)}${recencyParam()}`;
+    // Force US results & English UI, reduce personalization
+    const hardGeo = '&hl=en&gl=us&cr=countryUS&pws=0';
+    return `https://www.google.com/search?q=${encodeURIComponent(q)}${recencyParam()}${hardGeo}`;
   }
+
 
   function composeLocationFilter() {
     const custom = (qs("#locationCustom")?.value || "").trim();
@@ -217,14 +221,16 @@ import { PORTALS as RAW_PORTALS, ROLE, DEFAULT_US } from "./config.js";
     const extra = (qs("#extra")?.value || "").trim();
     if (extra) filters.push(extra);
 
-    // Add textual recency cues only if explicitly enabled
     if (ENABLE_SOFT_RECENCY) {
       const soft = tightRecencyTextFilter();
       if (soft) filters.push(soft);
     }
 
-    return [roleBlock, ...filters, siteFilter].filter(Boolean).join(" ");
+    // Always add hard geo exclusions
+    const q = [roleBlock, ...filters, siteFilter].filter(Boolean).join(" ");
+    return `${q} ${NEGATIVE_GEO}`;
   }
+
 
   function firstCheckedRoleBlock() {
     if (qs("#roleSRE")?.checked) return ROLE.SRE;
