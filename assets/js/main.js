@@ -119,12 +119,19 @@ import { PORTALS as RAW_PORTALS, ROLE, DEFAULT_US } from "./config.js";
   function gUrl(q) {
     return `https://www.google.com/search?q=${encodeURIComponent(q)}${recencyParam()}`;
   }
+  
   function composeLocationFilter() {
     const custom = (qs("#locationCustom")?.value || "").trim();
     if (custom) return `(${custom})`;
-    if (locations.length) return "(" + locations.join(" AND ") + ")";
-    return DEFAULT_US || '(("United States") OR US)';
+
+    // Wrap each location group in its own () and join with OR
+    if (locations.length) {
+      const groups = locations.map(g => `(${g})`);
+      return `(${groups.join(" OR ")})`;
+    }
+    return DEFAULT_US;
   }
+
   function activeFiltersCount() {
     const chips = qsa(".chip.active").length;
     const extra = (qs("#extra")?.value || "").trim() ? 1 : 0;
