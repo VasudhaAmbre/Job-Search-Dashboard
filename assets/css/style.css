@@ -397,17 +397,44 @@ select:focus {
   justify-content: space-between;
   align-items: center;
 }
+/* Better card button alignment */
 .role-row {
-  margin-top: 8px;
-  display: grid;
-  gap: 8px;
-  grid-template-columns: repeat(2, minmax(180px, 1fr));
+  margin-top: 10px;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  justify-content: flex-start;
 }
-@media (max-width: 640px) {
-  .role-row {
-    grid-template-columns: 1fr;
+
+.role-btn {
+  flex: 1 1 180px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  padding: 10px 12px;
+  background: transparent;
+  text-decoration: none;
+  color: var(--fg);
+  font-weight: 600;
+}
+
+.role-btn:hover {
+  background: rgba(2, 6, 23, 0.035);
+}
+.dark .role-btn:hover {
+  background: rgba(255, 255, 255, 0.05);
+}
+
+/* Ensures buttons wrap neatly on smaller screens */
+@media (max-width: 720px) {
+  .role-btn {
+    flex: 1 1 100%;
   }
 }
+
 .role-btn {
   display: flex;
   align-items: center;
