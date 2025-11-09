@@ -1,5 +1,5 @@
 /* ===============================
-   Job Search Dashboard — Clean CSS (Final Fixed Version)
+   Job Search Dashboard — Final Polished Version
    =============================== */
 
 /* -------- Theme tokens -------- */
@@ -41,14 +41,12 @@
   --accent: #ffeb3b;
   --link: #0000ee;
 }
-
 .hc .badge,
 .hc .chip,
 .hc .role-btn,
 .hc .btn.ghost {
   border-color: #000 !important;
 }
-
 .hc .portal-card {
   box-shadow: none !important;
   border: 2px solid #000 !important;
@@ -63,7 +61,6 @@
   scroll-behavior: auto !important;
 }
 
-
 /* -------- Base -------- */
 * {
   box-sizing: border-box;
@@ -76,8 +73,7 @@ body {
   margin: 0;
   background: var(--bg);
   color: var(--fg);
-  font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Arial,
-    "Apple Color Emoji";
+  font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Arial, "Apple Color Emoji";
   font-size: var(--text);
   line-height: 1.55;
   -webkit-font-smoothing: antialiased;
@@ -233,81 +229,7 @@ select:focus {
   font-weight: 600;
 }
 
-/* -------- Chips -------- */
-.chips {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 8px;
-}
-.chips.large .chip {
-  padding: 9px 14px;
-  font-size: 13.5px;
-}
-.chip {
-  cursor: pointer;
-  background: var(--bg);
-  border: 1px solid var(--line);
-  padding: 7px 12px;
-  border-radius: 999px;
-  font-size: 12.5px;
-  transition: filter 0.15s;
-  user-select: none;
-}
-.chip:hover {
-  filter: brightness(0.98);
-}
-.chip.active {
-  background: var(--accent);
-  border-color: #bfdbfe;
-  color: #1e40af;
-}
-.dark .chip.active {
-  color: #93c5fd;
-  border-color: #1d4ed8;
-}
-.chip.removable {
-  position: relative;
-  padding-right: 28px;
-}
-.chip-x {
-  margin-left: 8px;
-  border: 1px solid var(--line);
-  background: transparent;
-  color: var(--fg);
-  width: 20px;
-  height: 20px;
-  line-height: 18px;
-  border-radius: 999px;
-  cursor: pointer;
-  font-weight: 700;
-}
-
-/* -------- Hero search -------- */
-.hero-search .search-box {
-  display: grid;
-  grid-template-columns: 1.2fr 1.1fr 0.9fr auto;
-  gap: 10px;
-  align-items: end;
-}
-.hero-search .field {
-  display: flex;
-  flex-direction: column;
-  gap: 6px;
-}
-.hero-search label {
-  font-size: 12px;
-  color: var(--muted);
-}
-.quick-row {
-  margin-top: 10px;
-  display: flex;
-  gap: 14px;
-  align-items: center;
-  justify-content: space-between;
-  flex-wrap: wrap;
-}
-
-/* -------- Layout -------- */
+/* -------- Layout & Sidebar -------- */
 .layout {
   display: grid;
   grid-template-columns: 280px 1fr;
@@ -324,62 +246,16 @@ select:focus {
   top: 110px;
 }
 
-/* Sidebar sections */
-.sidebar.card label {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  padding: 6px 0;
-  margin: 0;
-  line-height: 1.25;
-  cursor: pointer;
-  user-select: none;
-}
-.sidebar.card input[type="checkbox"] {
-  width: 18px;
-  height: 18px;
-  accent-color: var(--link);
-}
-#locationPicker {
-  width: 100%;
-  height: 180px;
-  padding: 8px 10px;
-  border-radius: 10px;
-  background: var(--bg);
-  border: 1px solid var(--line);
-}
-#locationsChips {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 8px;
-  width: 100%;
-}
-#locationsChips .chip {
-  padding: 7px 12px;
-  border-radius: 999px;
-  line-height: 1;
-}
-#locationsChips .chip-x {
-  width: 18px;
-  height: 18px;
-  line-height: 16px;
-}
-
-/* -------- Results toolbar -------- */
-.results .results-toolbar {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  margin-bottom: 10px;
-}
-
-/* -------- Cards grid -------- */
+/* -------- Results grid -------- */
 .results-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
-  gap: 16px;
-  min-height: 200px;
-  align-items: start;
+  grid-template-columns: repeat(auto-fill, minmax(360px, 1fr));
+  gap: 20px;
+  align-items: stretch;
+}
+.results-grid > * {
+  display: flex;
+  flex-direction: column;
 }
 @media (max-width: 980px) {
   .results-grid {
@@ -387,23 +263,30 @@ select:focus {
   }
 }
 
+/* -------- Portal cards -------- */
 .portal-card {
-  display: grid;
-  grid-template-columns: 44px 1fr auto;
-  align-items: start;
-  gap: 14px;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  height: 100%;
   background: var(--card);
   border: 1px solid var(--line);
   border-radius: var(--radius);
-  padding: 16px 18px;
+  padding: 18px;
   box-shadow: var(--shadow);
-  transition: transform 0.12s ease, box-shadow 0.2s ease;
-}
-.portal-card:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 10px 24px rgba(2, 6, 23, 0.08);
+  transition: transform 0.18s ease, box-shadow 0.18s ease;
 }
 
+/* Hover elevation */
+.portal-card:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 10px 20px rgba(0, 0, 0, 0.12);
+}
+.dark .portal-card:hover {
+  box-shadow: 0 10px 20px rgba(255, 255, 255, 0.08);
+}
+
+/* Card elements */
 .portal-card .left {
   width: 44px;
   height: 44px;
@@ -415,6 +298,12 @@ select:focus {
   font-weight: 800;
   color: var(--muted);
 }
+.portal-card .header {
+  display: flex;
+  gap: 8px;
+  justify-content: space-between;
+  align-items: center;
+}
 .portal-card .portal {
   font-weight: 700;
   font-size: 16px;
@@ -424,13 +313,8 @@ select:focus {
   font-size: 12px;
   color: var(--muted);
 }
-.portal-card .header {
-  display: flex;
-  gap: 8px;
-  justify-content: space-between;
-  align-items: center;
-}
-/* Better card button alignment */
+
+/* -------- Role Buttons -------- */
 .role-row {
   margin-top: 10px;
   display: flex;
@@ -438,7 +322,6 @@ select:focus {
   gap: 10px;
   justify-content: flex-start;
 }
-
 .role-btn {
   flex: 1 1 180px;
   display: flex;
@@ -452,34 +335,7 @@ select:focus {
   text-decoration: none;
   color: var(--fg);
   font-weight: 600;
-}
-
-.role-btn:hover {
-  background: rgba(2, 6, 23, 0.035);
-}
-.dark .role-btn:hover {
-  background: rgba(255, 255, 255, 0.05);
-}
-
-/* Ensures buttons wrap neatly on smaller screens */
-@media (max-width: 720px) {
-  .role-btn {
-    flex: 1 1 100%;
-  }
-}
-
-.role-btn {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 8px;
-  border: 1px solid var(--line);
-  border-radius: 10px;
-  padding: 10px 12px;
-  background: transparent;
-  text-decoration: none;
-  color: var(--fg);
-  font-weight: 600;
+  transition: background 0.2s ease;
 }
 .role-btn:hover {
   background: rgba(2, 6, 23, 0.035);
@@ -503,119 +359,23 @@ select:focus {
   border-radius: 8px;
   font-weight: 600;
 }
-
-/* -------- Table View -------- */
-#resultsTableWrap {
-  margin-top: 10px;
-}
-.tbl,
-.results-table {
-  width: 100%;
-  border-collapse: separate;
-  border-spacing: 0;
-  background: var(--card);
-  border: 1px solid var(--line);
-  border-radius: var(--radius);
-  box-shadow: var(--shadow);
-  font-size: 14px;
-  overflow: hidden;
-}
-.tbl thead th,
-.results-table thead th {
-  position: sticky;
-  top: 0;
-  z-index: 1;
-  background: var(--soft);
-  color: var(--muted);
-  text-align: left;
-  font-weight: 700;
-  padding: 10px 12px;
-  border-bottom: 1px solid var(--line);
-  white-space: nowrap;
-}
-.tbl tbody td,
-.results-table tbody td {
-  padding: 10px 12px;
-  border-top: 1px solid var(--line);
-  vertical-align: middle;
-}
-.tbl tbody tr:nth-child(even),
-.results-table tbody tr:nth-child(even) {
-  background: rgba(2, 6, 23, 0.02);
-}
-.dark .tbl tbody tr:nth-child(even),
-.dark .results-table tbody tr:nth-child(even) {
-  background: rgba(255, 255, 255, 0.03);
-}
-
-/* Table responsiveness */
-@media (max-width: 860px) {
-  #resultsTableWrap {
-    overflow-x: auto;
-    -webkit-overflow-scrolling: touch;
-  }
-  .tbl,
-  .results-table {
-    min-width: 720px;
-  }
-}
-
-/* -------- Country selector -------- */
-.country-wrap {
-  display: inline-flex;
-  align-items: center;
-  gap: 8px;
-}
-#country {
-  min-width: 140px;
-  background: var(--card);
-  color: var(--fg);
-  border: 1px solid var(--line);
-  border-radius: 10px;
-  padding: 8px 12px;
-  font-size: 14px;
-}
-#country:focus {
-  outline: none;
-  border-color: #93c5fd;
-  box-shadow: 0 0 0 3px rgba(147, 197, 253, 0.35);
-}
-.badge.country {
-  background: var(--accent);
-  border-color: #93c5fd;
-  font-weight: 700;
-}
-
-/* -------- Dark Mode Fix -------- */
 .dark .role-btn .mini {
   border-color: #1d4ed8;
   color: #93c5fd;
 }
 
-/* -------- Responsive Search Form -------- */
-@media (max-width: 860px) {
-  .hero-search .search-box {
-    grid-template-columns: 1fr;
-  }
-}
-
-/* -------- Portal Card Responsive Fix -------- */
+/* -------- Responsive Fix -------- */
 @media (max-width: 720px) {
   .portal-card {
     grid-template-columns: 1fr;
     gap: 10px;
-    text-align: left;
-  }
-  .portal-card .left {
-    width: 36px;
-    height: 36px;
-    font-size: 13px;
   }
   .role-row {
-    grid-template-columns: 1fr;
+    flex-direction: column;
   }
 }
 
+/* -------- Results Toolbar -------- */
 .results-toolbar {
   position: sticky;
   top: 90px;
