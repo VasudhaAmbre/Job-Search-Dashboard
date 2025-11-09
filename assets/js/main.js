@@ -1,4 +1,7 @@
-/* Job Search Dashboard — main.js (Final Fixed Version) */
+/* ============================================================
+   Job Search Dashboard — main.js (Final Cleaned Version)
+   ============================================================ */
+
 import {
   PORTALS as RAW_PORTALS,
   ROLE,
@@ -13,37 +16,26 @@ const NEG_GEO = typeof NEGATIVE_GEO === "string" ? NEGATIVE_GEO : "";
   // ---------- helpers ----------
   const qs = (s) => document.querySelector(s);
   const qsa = (s) => Array.from(document.querySelectorAll(s));
-  const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
   const STORAGE_KEY = "jsdash_v1";
 
   let locations = [];
   let focusResultsNextRender = false;
-  let viewMode = "cards";
+  let viewMode = localStorage.getItem("jsdash_v1_view") || "cards";
   let countryCode = "US";
 
-  const ENABLE_SOFT_RECENCY = false;
-
-  const portals = Array.isArray(RAW_PORTALS) && RAW_PORTALS.length ? RAW_PORTALS : [{
-      name: "LinkedIn",
-      site: "site:linkedin.com/jobs",
-      domain: "linkedin.com/jobs"
-    },
-    {
-      name: "Indeed",
-      site: "site:indeed.com",
-      domain: "indeed.com"
-    },
-    {
-      name: "Glassdoor",
-      site: "site:glassdoor.com",
-      domain: "glassdoor.com"
-    },
-  ];
+  const portals = Array.isArray(RAW_PORTALS) && RAW_PORTALS.length
+    ? RAW_PORTALS
+    : [
+        { name: "LinkedIn", site: "site:linkedin.com/jobs", domain: "linkedin.com/jobs" },
+        { name: "Indeed", site: "site:indeed.com", domain: "indeed.com" },
+        { name: "Glassdoor", site: "site:glassdoor.com", domain: "glassdoor.com" }
+      ];
 
   // ---------- storage ----------
   function saveState() {
     try {
       localStorage.setItem(STORAGE_KEY, JSON.stringify(serializeState()));
+      localStorage.setItem("jsdash_v1_view", viewMode);
     } catch (err) {
       console.warn("⚠️ Save state failed:", err);
     }
@@ -145,17 +137,18 @@ const NEG_GEO = typeof NEGATIVE_GEO === "string" ? NEGATIVE_GEO : "";
     return ROLE.SRE;
   }
 
+  // ---------- badges ----------
   function updateBadges() {
     const rec = qs("#recency")?.value || "";
-    const text = rec ?
-      rec.startsWith("h") ?
-      `Past ${rec.substring(1)} hours` :
-      rec === "d" ?
-      "Past day" :
-      rec === "w" ?
-      "Past week" :
-      "Past month" :
-      "Any time";
+    const text = rec
+      ? rec.startsWith("h")
+        ? `Past ${rec.substring(1)} hours`
+        : rec === "d"
+        ? "Past day"
+        : rec === "w"
+        ? "Past week"
+        : "Past month"
+      : "Any time";
     ["#recencyBadge", "#recencyBadge2"].forEach((id) => {
       const b = qs(id);
       if (b) b.textContent = text;
@@ -170,29 +163,25 @@ const NEG_GEO = typeof NEGATIVE_GEO === "string" ? NEGATIVE_GEO : "";
     });
   }
 
+  // ---------- rendering ----------
   let renderTimer;
-
   function scheduleRender() {
     clearTimeout(renderTimer);
     renderTimer = setTimeout(render, 150);
   }
 
-  // ---------- renderers ----------
   function render() {
     const grid = qs("#resultsGrid");
     const table = qs("#resultsTableWrap");
     const empty = qs("#emptyResults");
-
     if (!grid || !table) return;
 
     grid.innerHTML = "";
     table.innerHTML = "";
 
-    // Update badges and country labels
     updateBadges();
     updateCountryBadges();
 
-    // Choose view mode
     if (viewMode === "table") {
       grid.setAttribute("hidden", "true");
       table.removeAttribute("hidden");
@@ -203,69 +192,17 @@ const NEG_GEO = typeof NEGATIVE_GEO === "string" ? NEGATIVE_GEO : "";
       renderCards();
     }
 
-    // Show or hide empty message
-    const hasContent = (grid.children.length > 0) || (table.querySelector("tbody tr"));
+    const hasContent =
+      (grid.children.length > 0) ||
+      (table.querySelector("tbody tr"));
     if (empty) empty.hidden = !!hasContent;
 
     saveState();
-
-    // Focus for accessibility
     if (focusResultsNextRender) {
       focusResultsNextRender = false;
       (viewMode === "cards" ? grid : table).focus();
     }
   }
-
-  function updateBadges() {
-    const rec = qs("#recency")?.value || "";
-    const text = rec ?
-      rec.startsWith("h") ?
-      `Past ${rec.substring(1)} hours` :
-      rec === "d" ?
-      "Past day" :
-      rec === "w" ?
-      "Past week" :
-      "Past month" :
-      "Any time";
-    ["#recencyBadge", "#recencyBadge2"].forEach((id) => {
-      const b = qs(id);
-      if (b) b.textContent = text;
-    });
-  }
-
-  function updateCountryBadges() {
-    const label = COUNTRY[countryCode]?.label || countryCode;
-    ["#countryBadge", "#countryBadge2"].forEach((id) => {
-      const b = qs(id);
-      if (b) b.textContent = label;
-    });
-  }
-
-  function updateBadges() {
-    const rec = qs("#recency")?.value || "";
-    const text = rec ?
-      rec.startsWith("h") ?
-      `Past ${rec.substring(1)} hours` :
-      rec === "d" ?
-      "Past day" :
-      rec === "w" ?
-      "Past week" :
-      "Past month" :
-      "Any time";
-    ["#recencyBadge", "#recencyBadge2"].forEach((id) => {
-      const b = qs(id);
-      if (b) b.textContent = text;
-    });
-  }
-
-  function updateCountryBadges() {
-    const label = COUNTRY[countryCode]?.label || countryCode;
-    ["#countryBadge", "#countryBadge2"].forEach((id) => {
-      const b = qs(id);
-      if (b) b.textContent = label;
-    });
-  }
-
 
   function renderCards() {
     const grid = qs("#resultsGrid");
@@ -275,7 +212,6 @@ const NEG_GEO = typeof NEGATIVE_GEO === "string" ? NEGATIVE_GEO : "";
 
     portals.forEach((p, i) => {
       if (!p || !p.name || !p.site) return;
-
       const card = document.createElement("div");
       card.className = "portal-card";
       card.tabIndex = 0;
@@ -298,6 +234,7 @@ const NEG_GEO = typeof NEGATIVE_GEO === "string" ? NEGATIVE_GEO : "";
 
       const roleRow = document.createElement("div");
       roleRow.className = "role-row";
+
       const addRoleButton = (label, block) => {
         const q = composeQuery(block, p.site);
         const a = document.createElement("a");
@@ -313,7 +250,6 @@ const NEG_GEO = typeof NEGATIVE_GEO === "string" ? NEGATIVE_GEO : "";
         const copy = document.createElement("button");
         copy.className = "mini";
         copy.textContent = "Copy";
-        copy.setAttribute("aria-label", `Copy ${p.name} ${label} search query`);
         copy.onclick = (e) => {
           e.preventDefault();
           navigator.clipboard.writeText(q).then(() => {
@@ -331,22 +267,7 @@ const NEG_GEO = typeof NEGATIVE_GEO === "string" ? NEGATIVE_GEO : "";
       if (qs("#roleCloud")?.checked) addRoleButton("Cloud", ROLE.Cloud);
       if (qs("#roleApigee")?.checked) addRoleButton("Apigee", ROLE.Apigee);
 
-      const sel = document.createElement("div");
-      const cb = document.createElement("input");
-      cb.type = "checkbox";
-      cb.className = "rowSelect";
-      const openOne = document.createElement("button");
-      openOne.className = "btn ghost mini";
-      openOne.textContent = "Open";
-      openOne.setAttribute("aria-label", `Open ${p.name} portal`);
-      openOne.onclick = () => {
-        const roleBlock = firstCheckedRoleBlock();
-        const q = composeQuery(roleBlock, p.site);
-        window.open(gUrl(q), "_blank");
-      };
-      sel.append(cb, openOne);
-
-      card.append(left, header, roleRow, sel);
+      card.append(left, header, roleRow);
       frag.append(card);
     });
 
@@ -368,8 +289,6 @@ const NEG_GEO = typeof NEGATIVE_GEO === "string" ? NEGATIVE_GEO : "";
           <th>SRE</th>
           <th>Cloud</th>
           <th>Apigee</th>
-          <th>Select</th>
-          <th>Open</th>
         </tr>
       </thead>
     `;
@@ -393,7 +312,6 @@ const NEG_GEO = typeof NEGATIVE_GEO === "string" ? NEGATIVE_GEO : "";
         const btn = document.createElement("button");
         btn.className = "mini";
         btn.textContent = "Copy";
-        btn.setAttribute("aria-label", `Copy ${p.name} ${label} query`);
         btn.onclick = (e) => {
           e.preventDefault();
           navigator.clipboard.writeText(q).then(() => {
@@ -413,23 +331,6 @@ const NEG_GEO = typeof NEGATIVE_GEO === "string" ? NEGATIVE_GEO : "";
         makeCell("Cloud", ROLE.Cloud),
         makeCell("Apigee", ROLE.Apigee)
       );
-
-      const tdSel = document.createElement("td");
-      const cb = document.createElement("input");
-      cb.type = "checkbox";
-      cb.className = "rowSelect";
-      tdSel.append(cb);
-      const tdOpen = document.createElement("td");
-      const open = document.createElement("button");
-      open.className = "btn ghost mini";
-      open.textContent = "Open";
-      open.onclick = () => {
-        const roleBlock = firstCheckedRoleBlock();
-        const q = composeQuery(roleBlock, p.site);
-        window.open(gUrl(q), "_blank");
-      };
-      tdOpen.append(open);
-      tr.append(tdSel, tdOpen);
       tbody.append(tr);
     });
 
@@ -440,8 +341,7 @@ const NEG_GEO = typeof NEGATIVE_GEO === "string" ? NEGATIVE_GEO : "";
   // ---------- keyboard shortcuts ----------
   document.addEventListener("keydown", (e) => {
     const tag = (e.target?.tagName || "").toLowerCase();
-    const isTyping = tag === "input" || tag === "textarea" || e.target.isContentEditable;
-    if (isTyping || e.metaKey || e.ctrlKey) return;
+    if (["input", "textarea"].includes(tag) || e.metaKey || e.ctrlKey) return;
 
     switch (e.key) {
       case "/":
@@ -459,11 +359,6 @@ const NEG_GEO = typeof NEGATIVE_GEO === "string" ? NEGATIVE_GEO : "";
           darkEl.dispatchEvent(new Event("change"));
         }
         break;
-      case "o":
-      case "O":
-        e.preventDefault();
-        qs("#openSelectedBtn")?.click();
-        break;
       default:
         break;
     }
@@ -474,13 +369,13 @@ const NEG_GEO = typeof NEGATIVE_GEO === "string" ? NEGATIVE_GEO : "";
     loadState();
     render();
 
-    // Dark toggle listener
+    // Dark toggle
     qs("#darkToggle")?.addEventListener("change", (e) => {
       document.body.classList.toggle("dark", e.target.checked);
       saveState();
     });
 
-    // Country change
+    // Country
     qs("#country")?.addEventListener("change", (e) => {
       countryCode = e.target.value;
       updateCountryBadges();
@@ -501,7 +396,7 @@ const NEG_GEO = typeof NEGATIVE_GEO === "string" ? NEGATIVE_GEO : "";
       }
     });
 
-    // Chip toggle
+    // Chip toggles
     qsa("#chipsRow .chip").forEach((chip) =>
       chip.addEventListener("click", () => {
         chip.classList.toggle("active");
@@ -509,21 +404,54 @@ const NEG_GEO = typeof NEGATIVE_GEO === "string" ? NEGATIVE_GEO : "";
       })
     );
 
-    // Form submit
+    // Search form
     qs("#searchForm")?.addEventListener("submit", (e) => {
       e.preventDefault();
       focusResultsNextRender = true;
       scheduleRender();
     });
 
-    // Reset button
+    // Reset
     qs("#resetBtn")?.addEventListener("click", () => {
       qsa("#chipsRow .chip").forEach((c) => c.classList.remove("active"));
       ["extra", "locationCustom"].forEach((id) => (qs("#" + id).value = ""));
       if (qs("#recency")) qs("#recency").value = "";
       locations = [];
+      qs("#locationsChips").innerHTML = "";
+      scheduleRender();
+    });
+
+    // Location chip management
+    qs("#addSelectedLocations")?.addEventListener("click", () => {
+      const picker = qs("#locationPicker");
+      const chips = qs("#locationsChips");
+      if (!picker || !chips) return;
+      Array.from(picker.selectedOptions).forEach((opt) => {
+        const val = opt.value;
+        if (!locations.includes(val)) {
+          locations.push(val);
+          const chip = document.createElement("span");
+          chip.className = "chip removable";
+          chip.textContent = opt.textContent;
+          const x = document.createElement("button");
+          x.className = "chip-x";
+          x.textContent = "×";
+          x.onclick = () => {
+            chip.remove();
+            locations = locations.filter((l) => l !== val);
+            scheduleRender();
+          };
+          chip.append(x);
+          chips.append(chip);
+        }
+      });
+      scheduleRender();
+    });
+
+    qs("#clearLocations")?.addEventListener("click", () => {
+      locations = [];
+      qs("#locationsChips").innerHTML = "";
       scheduleRender();
     });
   });
-
 })();
