@@ -2,26 +2,26 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <meta name="description" content="Interactive Job Search Dashboard for SRE, DevOps, Cloud & Apigee roles — filter, copy, and open job searches across major portals." />
+  <title>Job Search Dashboard</title>
 
-  <!-- ✅ CSP tuned for ES modules and your CDNs -->
+  <!-- ✅ CSP simplified for GitHub Pages + JS modules -->
   <meta http-equiv="Content-Security-Policy" content="
-    default-src 'self';
+    default-src 'self' data:;
     script-src 'self' 'unsafe-inline' 'unsafe-eval' https://cdn.jsdelivr.net https://unpkg.com;
     style-src  'self' 'unsafe-inline' https://fonts.googleapis.com https://cdn.jsdelivr.net;
-    font-src   'self' https://fonts.gstatic.com https://cdn.jsdelivr.net;
+    font-src   'self' https://fonts.gstatic.com;
     img-src    'self' data: https:;
     connect-src 'self';
     frame-ancestors 'none';
-    base-uri 'self';
-    form-action 'self';
     upgrade-insecure-requests;
   ">
 
-  <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>Job Search Dashboard</title>
   <link rel="stylesheet" href="assets/css/style.css" />
 </head>
-<body class="dark">
+
+<body>
   <a href="#resultsGrid" class="skip-link">Skip to results</a>
 
   <header class="app-header">
@@ -56,9 +56,8 @@
   </header>
 
   <main class="wrap">
-    <section class="hero-search card" role="region" aria-labelledby="heroTitle">
-      <h2 id="heroTitle" class="sr-only">Search filters</h2>
-
+    <!-- Search Filters -->
+    <section class="hero-search card">
       <form id="searchForm" class="search-form">
         <div class="search-box">
           <div class="field">
@@ -100,18 +99,14 @@
             <select id="recency">
               <option value="">Any time</option>
               <optgroup label="Hours">
-                <option value="h1">Past 1 hour</option><option value="h2">Past 2 hours</option>
-                <option value="h3">Past 3 hours</option><option value="h4">Past 4 hours</option>
-                <option value="h5">Past 5 hours</option><option value="h6">Past 6 hours</option>
-                <option value="h7">Past 7 hours</option><option value="h8">Past 8 hours</option>
-                <option value="h9">Past 9 hours</option><option value="h10">Past 10 hours</option>
-                <option value="h11">Past 11 hours</option><option value="h12">Past 12 hours</option>
-                <option value="h13">Past 13 hours</option><option value="h14">Past 14 hours</option>
-                <option value="h15">Past 15 hours</option><option value="h16">Past 16 hours</option>
-                <option value="h17">Past 17 hours</option><option value="h18">Past 18 hours</option>
-                <option value="h19">Past 19 hours</option><option value="h20">Past 20 hours</option>
-                <option value="h21">Past 21 hours</option><option value="h22">Past 22 hours</option>
-                <option value="h23">Past 23 hours</option><option value="h24">Past 24 hours</option>
+                <option value="h1">Past 1 hour</option>
+                <option value="h2">Past 2 hours</option>
+                <option value="h3">Past 3 hours</option>
+                <option value="h4">Past 4 hours</option>
+                <option value="h5">Past 5 hours</option>
+                <option value="h6">Past 6 hours</option>
+                <option value="h12">Past 12 hours</option>
+                <option value="h24">Past 24 hours</option>
               </optgroup>
               <optgroup label="Ranges">
                 <option value="d">Past day</option>
@@ -133,10 +128,9 @@
       </form>
     </section>
 
+    <!-- Layout Section -->
     <section class="layout">
-      <aside class="sidebar card" role="region" aria-labelledby="sidebarTitle">
-        <h2 id="sidebarTitle" class="sr-only">Role and location filters</h2>
-
+      <aside class="sidebar card">
         <h3>Roles</h3>
         <label><input id="roleSRE" type="checkbox" checked /> Site Reliability Engineer</label>
         <label><input id="roleDevOps" type="checkbox" checked /> DevOps</label>
@@ -162,25 +156,19 @@
         <div id="locationsChips" class="chips" style="margin-top:8px;"></div>
       </aside>
 
-      <section class="results" role="region" aria-labelledby="resultsTitle">
-        <h2 id="resultsTitle" class="sr-only">Search results</h2>
-
-        <div class="results-toolbar" role="toolbar" aria-label="Results actions">
+      <section class="results">
+        <div class="results-toolbar card" role="toolbar" aria-label="Results actions">
           <div class="badges" aria-live="polite">
             <span id="countryBadge2" class="badge">United States</span>
             <span id="recencyBadge2" class="badge">Any time</span>
             <span id="filtersBadge2" class="badge muted">0 filters</span>
             <span id="locationsBadge2" class="badge muted">US</span>
           </div>
-          <button id="openSelectedBtn" class="btn ghost" type="button" aria-controls="resultsGrid">
-            Open selected
-          </button>
-          <button id="copyAllBtn" class="btn ghost" type="button" title="Copy all search links to clipboard">
-            Copy all links
-          </button>
-          <button id="openInBatchesBtn" class="btn ghost" type="button" title="Open links in batches of 5">
-            Open 5 at a time
-          </button>
+          <div class="row" style="flex-wrap:wrap;gap:8px;">
+            <button id="openSelectedBtn" class="btn ghost" type="button">Open selected</button>
+            <button id="copyAllBtn" class="btn ghost" type="button" title="Copy all search links to clipboard">Copy all links</button>
+            <button id="openInBatchesBtn" class="btn ghost" type="button" title="Open links in batches of 5">Open 5 at a time</button>
+          </div>
         </div>
 
         <!-- Cards view -->
@@ -188,11 +176,17 @@
 
         <!-- Table view -->
         <div id="resultsTableWrap" tabindex="-1" hidden aria-label="Portals table"></div>
+
+        <!-- Empty results placeholder -->
+        <div id="emptyResults" class="empty" hidden>
+          No job portals found — adjust filters and try again.
+        </div>
       </section>
     </section>
 
     <footer class="app-footer">
-      <small>Links open Google with your current filters and recency.</small>
+      <small>Links open Google with your current filters and recency.</small><br />
+      <small><a href="https://github.com/VasudhaAmbre/Job-Search-Dashboard" target="_blank" rel="noopener">View source on GitHub</a></small>
     </footer>
   </main>
 
