@@ -375,6 +375,18 @@ const NEG_GEO = typeof NEGATIVE_GEO === "string" ? NEGATIVE_GEO : "";
       saveState();
     });
 
+    // High contrast toggle listener
+    qs("#highContrastToggle")?.addEventListener("change", (e) => {
+      document.body.classList.toggle("hc", e.target.checked);
+      saveState();
+    });
+
+    // Reduce motion toggle listener
+    qs("#reduceMotionToggle")?.addEventListener("change", (e) => {
+      document.body.classList.toggle("reduce-motion", e.target.checked);
+      saveState();
+    });
+
     // Country
     qs("#country")?.addEventListener("change", (e) => {
       countryCode = e.target.value;

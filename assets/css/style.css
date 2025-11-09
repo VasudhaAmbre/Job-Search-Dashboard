@@ -31,6 +31,39 @@
   --shadow: 0 12px 34px rgba(0, 0, 0, 0.28);
 }
 
+/* -------- High Contrast Mode -------- */
+.hc {
+  --bg: #ffffff;
+  --fg: #000000;
+  --card: #ffffff;
+  --line: #000;
+  --muted: #222;
+  --accent: #ffeb3b;
+  --link: #0000ee;
+}
+
+.hc .badge,
+.hc .chip,
+.hc .role-btn,
+.hc .btn.ghost {
+  border-color: #000 !important;
+}
+
+.hc .portal-card {
+  box-shadow: none !important;
+  border: 2px solid #000 !important;
+}
+
+/* -------- Reduce Motion -------- */
+.reduce-motion *,
+.reduce-motion *::before,
+.reduce-motion *::after {
+  animation: none !important;
+  transition: none !important;
+  scroll-behavior: auto !important;
+}
+
+
 /* -------- Base -------- */
 * {
   box-sizing: border-box;
