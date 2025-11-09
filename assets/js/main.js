@@ -1,47 +1,53 @@
-/* Job Search Dashboard — main.js (cards <-> table + country selector) */
+/* Job Search Dashboard — main.js (Final Fixed Version) */
 import {
   PORTALS as RAW_PORTALS,
   ROLE,
   DEFAULT_US,
   NEGATIVE_GEO,
-  COUNTRY, // { code: { hl, gl, cr, uule, label, defaultQuery } }
+  COUNTRY
 } from "./config.js";
 
-const NEG_GEO = (typeof NEGATIVE_GEO === "string") ? NEGATIVE_GEO : "";
+const NEG_GEO = typeof NEGATIVE_GEO === "string" ? NEGATIVE_GEO : "";
 
 (function () {
-  // ---------- tiny helpers ----------
-  const qs  = (s) => document.querySelector(s);
+  // ---------- helpers ----------
+  const qs = (s) => document.querySelector(s);
   const qsa = (s) => Array.from(document.querySelectorAll(s));
   const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
+  const STORAGE_KEY = "jsdash_v1";
+
+  let locations = [];
+  let focusResultsNextRender = false;
+  let viewMode = "cards";
+  let countryCode = "US";
 
   const ENABLE_SOFT_RECENCY = false;
 
-  // Robust portals array (fallbacks if config.js is wrong)
-  const portals = Array.isArray(RAW_PORTALS) && RAW_PORTALS.length
-    ? RAW_PORTALS
-    : [
-        { name: "LinkedIn",   site: "site:linkedin.com/jobs", domain: "linkedin.com/jobs" },
-        { name: "Indeed",     site: "site:indeed.com",        domain: "indeed.com" },
-        { name: "Glassdoor",  site: "site:glassdoor.com",     domain: "glassdoor.com" },
-        { name: "Workday",    site: "site:myworkdayjobs.com", domain: "myworkdayjobs.com" },
-      ];
-
-  // ---------- render scheduler ----------
-  let renderTimer;
-  function scheduleRender() {
-    clearTimeout(renderTimer);
-    renderTimer = setTimeout(render, 120);
-  }
-
-  // ---------- state ----------
-  let locations = []; // removable chips strings
-  let focusResultsNextRender = false;
-  let viewMode = "cards";           // "cards" | "table"
-  let countryCode = "US";           // one of keys in COUNTRY
+  const portals = Array.isArray(RAW_PORTALS) && RAW_PORTALS.length ? RAW_PORTALS : [
+    { name: "LinkedIn", site: "site:linkedin.com/jobs", domain: "linkedin.com/jobs" },
+    { name: "Indeed", site: "site:indeed.com", domain: "indeed.com" },
+    { name: "Glassdoor", site: "site:glassdoor.com", domain: "glassdoor.com" },
+  ];
 
   // ---------- storage ----------
-  const STORAGE_KEY = "jsdash_v1";
+  function saveState() {
+    try {
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(serializeState()));
+    } catch (err) {
+      console.warn("⚠️ Save state failed:", err);
+    }
+  }
+
+  function loadState() {
+    try {
+      const raw = localStorage.getItem(STORAGE_KEY);
+      if (!raw) return;
+      deserializeState(JSON.parse(raw));
+    } catch (err) {
+      console.warn("⚠️ State reset due to localStorage error:", err);
+      localStorage.removeItem(STORAGE_KEY);
+    }
+  }
 
   function serializeState() {
     const chipsActive = qsa("#chipsRow .chip.active")
@@ -49,326 +55,127 @@ const NEG_GEO = (typeof NEGATIVE_GEO === "string") ? NEGATIVE_GEO : "";
       .map((c) => c.dataset.k);
 
     return {
-      recency:  qs("#recency")?.value || "",
-      extra:    qs("#extra")?.value || "",
-      custom:   qs("#locationCustom")?.value || "",
-      locations: locations.slice(0, 50),
+      recency: qs("#recency")?.value || "",
+      extra: qs("#extra")?.value || "",
+      custom: qs("#locationCustom")?.value || "",
+      locations,
       chips: chipsActive,
       roles: {
-        sre:    !!qs("#roleSRE")?.checked,
+        sre: !!qs("#roleSRE")?.checked,
         devops: !!qs("#roleDevOps")?.checked,
-        cloud:  !!qs("#roleCloud")?.checked,
+        cloud: !!qs("#roleCloud")?.checked,
         apigee: !!qs("#roleApigee")?.checked,
       },
-      dark:          !!qs("#darkToggle")?.checked,
-      highContrast:  !!qs("#highContrastToggle")?.checked,
-      reduceMotion:  !!qs("#reduceMotionToggle")?.checked,
+      dark: !!qs("#darkToggle")?.checked,
+      highContrast: !!qs("#highContrastToggle")?.checked,
+      reduceMotion: !!qs("#reduceMotionToggle")?.checked,
       viewMode,
       country: countryCode,
     };
   }
 
-  function deserializeState(state, { partial = false } = {}) {
-    if (!state || typeof state !== "object") return;
+  function deserializeState(state) {
+    if (!state) return;
     const has = (k) => Object.prototype.hasOwnProperty.call(state, k);
 
-    if (!partial || has("recency")) { if (qs("#recency")) qs("#recency").value = state.recency ?? ""; }
-    if (!partial || has("extra"))   { if (qs("#extra")) qs("#extra").value = state.extra ?? ""; }
-    if (!partial || has("custom"))  { if (qs("#locationCustom")) qs("#locationCustom").value = state.custom ?? ""; }
+    if (has("recency")) qs("#recency").value = state.recency || "";
+    if (has("extra")) qs("#extra").value = state.extra || "";
+    if (has("custom")) qs("#locationCustom").value = state.custom || "";
+    if (has("locations")) locations = Array.isArray(state.locations) ? state.locations : [];
 
-    if (!partial || has("locations")) {
-      locations = Array.isArray(state.locations) ? state.locations.slice(0, 50) : [];
-    }
+    document.body.classList.toggle("dark", !!state.dark);
+    document.body.classList.toggle("hc", !!state.highContrast);
+    document.body.classList.toggle("reduce-motion", !!state.reduceMotion);
 
-    if (!partial || has("chips")) {
-      const chipSet = new Set(Array.isArray(state.chips) ? state.chips : []);
-      qsa("#chipsRow .chip").forEach((c) => {
-        if (!c.classList.contains("removable")) c.classList.toggle("active", chipSet.has(c.dataset.k));
-      });
-    }
-
-    if (!partial || has("roles")) {
-      if (state.roles) {
-        if (qs("#roleSRE"))    qs("#roleSRE").checked = !!state.roles.sre;
-        if (qs("#roleDevOps")) qs("#roleDevOps").checked = !!state.roles.devops;
-        if (qs("#roleCloud"))  qs("#roleCloud").checked  = !!state.roles.cloud;
-        if (qs("#roleApigee")) qs("#roleApigee").checked = !!state.roles.apigee;
-      }
-    }
-
-    if (!partial || has("dark")) {
-      const on = !!state.dark;
-      if (qs("#darkToggle")) qs("#darkToggle").checked = on;
-      document.body.classList.toggle("dark", on);
-    }
-    if (!partial || has("highContrast")) {
-      const on = !!state.highContrast;
-      if (qs("#highContrastToggle")) qs("#highContrastToggle").checked = on;
-      document.body.classList.toggle("hc", on);
-    }
-    if (!partial || has("reduceMotion")) {
-      const on = !!state.reduceMotion;
-      if (qs("#reduceMotionToggle")) qs("#reduceMotionToggle").checked = on;
-      document.body.classList.toggle("reduce-motion", on);
-    }
-
-    if (!partial || has("viewMode")) {
-      viewMode = state.viewMode === "table" ? "table" : "cards";
-      const cardsRB = qs("#viewCards"), tableRB = qs("#viewTable");
-      if (cardsRB && tableRB) {
-        cardsRB.checked = viewMode === "cards";
-        tableRB.checked = viewMode === "table";
-      }
-    }
-
-    if (!partial || has("country")) {
-      const code = state.country && COUNTRY[state.country] ? state.country : "US";
-      countryCode = code;
-      const sel = qs("#country");
-      if (sel) sel.value = countryCode;
-      updateCountryBadges();
-    }
+    viewMode = state.viewMode === "table" ? "table" : "cards";
+    countryCode = COUNTRY[state.country] ? state.country : "US";
   }
 
-  function saveState() {
-    try { localStorage.setItem(STORAGE_KEY, JSON.stringify(serializeState())); } catch {}
-  }
-  function loadState() {
-    try {
-      const raw = localStorage.getItem(STORAGE_KEY);
-      if (!raw) return;
-      deserializeState(JSON.parse(raw), { partial: false });
-    } catch {}
-  }
-
-  // ---------- helpers ----------
-  function recencyParam() {
-    const v = (qs("#recency")?.value || "").trim();
-    if (!v) return "";
-    if (v.startsWith("h")) return `&tbs=qdr:h${v.substring(1)}`;
-    return `&tbs=qdr:${v}`; // d | w | m
-  }
-
-  // Build a Google URL honoring the selected country
-  function gUrl(q) {
-    const C = COUNTRY[countryCode] || COUNTRY.US;
-    const hardGeo =
-      `&hl=${encodeURIComponent(C.hl)}&gl=${encodeURIComponent(C.gl)}${C.cr ? `&cr=${encodeURIComponent(C.cr)}` : ""}` +
-      `${C.uule ? `&uule=${encodeURIComponent(C.uule)}` : ""}&pws=0&nfpr=1`;
-    return `https://www.google.com/search?q=${encodeURIComponent(q)}${recencyParam()}${hardGeo}`;
-  }
-
+  // ---------- query helpers ----------
   function composeLocationFilter() {
     const custom = (qs("#locationCustom")?.value || "").trim();
     if (custom) return `(${custom})`;
-
-    if (locations.length) {
-      const groups = locations.map(g => `(${g})`);
-      return `(${groups.join(" OR ")})`;
-    }
-
-    // Country default query (e.g., US remote bias) if provided; else DEFAULT_US
+    if (locations.length) return `(${locations.map((l) => `(${l})`).join(" OR ")})`;
     const C = COUNTRY[countryCode] || COUNTRY.US;
     return C.defaultQuery || DEFAULT_US;
   }
 
-  function activeFiltersCount() {
-    const chips = qsa(".chip.active").length;
-    const extra = (qs("#extra")?.value || "").trim() ? 1 : 0;
-    return chips + extra;
-  }
-
-  function updateBadges() {
-    const r = (qs("#recency")?.value || "");
-    const rText = r
-      ? (r.startsWith("h")
-          ? `Past ${r.substring(1)} hours`
-          : r === "d" ? "Past 24 hours" : r === "w" ? "Past week" : "Past month")
-      : "Any time";
-    ["#recencyBadge", "#recencyBadge2"].forEach((id) => { const b = qs(id); if (b) b.textContent = rText; });
-
-    const count = activeFiltersCount();
-    ["#filtersBadge", "#filtersBadge2"].forEach((id) => {
-      const b = qs(id);
-      if (b) {
-        b.textContent = count ? `${count} filter${count > 1 ? "s" : ""}` : "0 filters";
-        b.classList.toggle("muted", count === 0);
-      }
-    });
-
-    const L = locations.length;
-    const hasCustom = (qs("#locationCustom")?.value || "").trim();
-    const text = hasCustom ? "Custom" : (L ? `${L} location${L > 1 ? "s" : ""}` : (COUNTRY[countryCode]?.label || "US"));
-    ["#locationsBadge", "#locationsBadge2"].forEach((id) => {
-      const b = qs(id); if (b) { b.textContent = text; b.classList.toggle("muted", !L && !hasCustom); }
-    });
-  }
-
-  function updateCountryBadges() {
-    const label = COUNTRY[countryCode]?.label || countryCode;
-    ["#countryBadge", "#countryBadge2"].forEach((id) => {
-      const b = qs(id);
-      if (b) b.textContent = label;
-    });
-  }
-
-  // chips UI (removable)
-  function renderLocationChips() {
-    const wrap = qs("#locationsChips");
-    if (!wrap) return;
-    wrap.innerHTML = "";
-    locations.forEach((L) => {
-      const pill = document.createElement("span");
-      pill.className = "chip active removable";
-      pill.textContent = L.replaceAll('"', "");
-      const x = document.createElement("button");
-      x.className = "chip-x"; x.textContent = "×"; x.title = "Remove";
-      x.onclick = () => {
-        locations = locations.filter((t) => t !== L);
-        renderLocationChips();
-        scheduleRender();
-      };
-      pill.appendChild(x);
-      wrap.appendChild(pill);
-    });
-    updateBadges();
-  }
-  function addLocationChip(text) {
-    if (!text || locations.includes(text)) return;
-    locations.push(text);
-    renderLocationChips();
-    scheduleRender();
-  }
-
-  // Soft text filter for very tight hour windows (kept, but gated)
-  function tightRecencyTextFilter() {
+  function recencyParam() {
     const v = (qs("#recency")?.value || "").trim();
-    if (!v || !v.startsWith("h")) return "";
-    const hrs = parseInt(v.slice(1), 10);
-    if (!Number.isFinite(hrs) || hrs > 3) return "";
-    return '("minute ago" OR "minutes ago" OR "hour ago" OR "hours ago" OR "just posted")';
+    if (!v) return "";
+    if (v.startsWith("h")) return `&tbs=qdr:h${v.substring(1)}`;
+    return `&tbs=qdr:${v}`;
   }
 
-  // ---------- query composer ----------
+  function gUrl(q) {
+    const C = COUNTRY[countryCode] || COUNTRY.US;
+    const hardGeo = `&hl=${C.hl}&gl=${C.gl}${C.cr ? `&cr=${C.cr}` : ""}${C.uule ? `&uule=${C.uule}` : ""}`;
+    return `https://www.google.com/search?q=${encodeURIComponent(q)}${recencyParam()}${hardGeo}&pws=0&nfpr=1`;
+  }
+
   function composeQuery(roleBlock, siteFilter) {
     const filters = [];
     const loc = composeLocationFilter();
     if (loc) filters.push(loc);
-
-    qsa(".chip.active").forEach(c => {
+    qsa(".chip.active").forEach((c) => {
       if (!c.classList.contains("removable")) filters.push(c.dataset.k);
     });
-
     const extra = (qs("#extra")?.value || "").trim();
     if (extra) filters.push(extra);
-
-    if (ENABLE_SOFT_RECENCY) {
-      const soft = tightRecencyTextFilter();
-      if (soft) filters.push(soft);
-    }
-
     const q = [roleBlock, ...filters, siteFilter].filter(Boolean).join(" ");
     return `${q} ${NEG_GEO}`.trim();
   }
 
   function firstCheckedRoleBlock() {
-    if (qs("#roleSRE")?.checked)   return ROLE.SRE;
+    if (qs("#roleSRE")?.checked) return ROLE.SRE;
     if (qs("#roleDevOps")?.checked) return ROLE.DevOps;
-    if (qs("#roleCloud")?.checked)  return ROLE.Cloud;
+    if (qs("#roleCloud")?.checked) return ROLE.Cloud;
     if (qs("#roleApigee")?.checked) return ROLE.Apigee;
     return ROLE.SRE;
   }
 
-  // ---------- batch helpers ----------
-  function chunk(arr, size) {
-    const out = [];
-    for (let i = 0; i < arr.length; i += size) out.push(arr.slice(i, i + size));
-    return out;
-  }
-
-  // Works for both cards & table views — relies on order of .rowSelect
-  function getTargetPortalIndexes() {
-    const checkboxes = qsa(".rowSelect");
-    if (!checkboxes.length) return portals.map((_, i) => i);
-    const idxs = [];
-    checkboxes.forEach((cb, i) => { if (cb.checked) idxs.push(i); });
-    return idxs.length ? idxs : portals.map((_, i) => i);
-  }
-
-  function buildQueriesForIndexes(idxs) {
-    const roleBlock = firstCheckedRoleBlock();
-    const list = [];
-    idxs.forEach((i) => {
-      const p = portals[i];
-      if (!p) return;
-      const q = composeQuery(roleBlock, p.site);
-      list.push({ name: p.name, url: gUrl(q) });
-    });
-    return list;
-  }
-
-  // ---------- renderer: unified ----------
+  // ---------- renderers ----------
   function render() {
-    updateBadges();
-    updateCountryBadges();
-
     if (viewMode === "table") {
       qs("#resultsGrid")?.setAttribute("hidden", "true");
       qs("#resultsTableWrap")?.removeAttribute("hidden");
       renderTable();
     } else {
       qs("#resultsTableWrap")?.setAttribute("hidden", "true");
-      const grid = qs("#resultsGrid");
-      if (grid) grid.removeAttribute("hidden");
+      qs("#resultsGrid")?.removeAttribute("hidden");
       renderCards();
-    }
-
-    if (focusResultsNextRender) {
-      focusResultsNextRender = false;
-      (viewMode === "table" ? qs("#resultsTableWrap") : qs("#resultsGrid"))?.focus();
     }
     saveState();
   }
 
-  // ---------- renderer: cards (existing) ----------
   function renderCards() {
     const grid = qs("#resultsGrid");
     if (!grid) return;
-
     grid.innerHTML = "";
     const frag = document.createDocumentFragment();
-
-    if (!Array.isArray(portals) || !portals.length) {
-      const msg = document.createElement("div");
-      msg.className = "empty";
-      msg.textContent = "No portals configured.";
-      grid.appendChild(msg);
-      return;
-    }
 
     portals.forEach((p, i) => {
       if (!p || !p.name || !p.site) return;
 
       const card = document.createElement("div");
       card.className = "portal-card";
+      card.tabIndex = 0;
       card.setAttribute("role", "listitem");
-      card.setAttribute("tabindex", "0");
-      card.setAttribute("aria-label", `Portal ${p.name}`);
+      card.setAttribute("aria-label", `Job portal ${p.name}`);
 
       const left = document.createElement("div");
       left.className = "left";
       left.textContent = i + 1;
 
-      const head = document.createElement("div");
-      head.className = "header";
+      const header = document.createElement("div");
+      header.className = "header";
       const title = document.createElement("h4");
       title.className = "portal";
       title.textContent = p.name;
       const domain = document.createElement("div");
       domain.className = "domain";
       domain.textContent = p.domain || "";
-      head.appendChild(title);
-      head.appendChild(domain);
+      header.append(title, domain);
 
       const roleRow = document.createElement("div");
       roleRow.className = "role-row";
@@ -381,12 +188,13 @@ const NEG_GEO = (typeof NEGATIVE_GEO === "string") ? NEGATIVE_GEO : "";
         a.rel = "noopener";
         const span = document.createElement("span");
         span.className = "label";
-        span.textContent = `${label} `;
+        span.textContent = label;
         const tools = document.createElement("div");
         tools.className = "role-tools";
         const copy = document.createElement("button");
         copy.className = "mini";
         copy.textContent = "Copy";
+        copy.setAttribute("aria-label", `Copy ${p.name} ${label} search query`);
         copy.onclick = (e) => {
           e.preventDefault();
           navigator.clipboard.writeText(q).then(() => {
@@ -394,344 +202,153 @@ const NEG_GEO = (typeof NEGATIVE_GEO === "string") ? NEGATIVE_GEO : "";
             setTimeout(() => (copy.textContent = "Copy"), 900);
           });
         };
-        tools.appendChild(copy);
-        a.appendChild(span);
-        a.appendChild(tools);
-        roleRow.appendChild(a);
+        tools.append(copy);
+        a.append(span, tools);
+        roleRow.append(a);
       };
 
-      if (qs("#roleSRE")?.checked)    addRoleButton("SRE",    ROLE.SRE);
+      if (qs("#roleSRE")?.checked) addRoleButton("SRE", ROLE.SRE);
       if (qs("#roleDevOps")?.checked) addRoleButton("DevOps", ROLE.DevOps);
-      if (qs("#roleCloud")?.checked)  addRoleButton("Cloud",  ROLE.Cloud);
+      if (qs("#roleCloud")?.checked) addRoleButton("Cloud", ROLE.Cloud);
       if (qs("#roleApigee")?.checked) addRoleButton("Apigee", ROLE.Apigee);
 
-      const body = document.createElement("div");
-      body.appendChild(head);
-      body.appendChild(roleRow);
-
       const sel = document.createElement("div");
-      sel.className = "select-col";
       const cb = document.createElement("input");
       cb.type = "checkbox";
       cb.className = "rowSelect";
       const openOne = document.createElement("button");
       openOne.className = "btn ghost mini";
       openOne.textContent = "Open";
-      openOne.setAttribute("aria-label", `Open ${p.name} with current filters`);
+      openOne.setAttribute("aria-label", `Open ${p.name} portal`);
       openOne.onclick = () => {
         const roleBlock = firstCheckedRoleBlock();
         const q = composeQuery(roleBlock, p.site);
         window.open(gUrl(q), "_blank");
       };
-      sel.appendChild(cb);
-      sel.appendChild(openOne);
+      sel.append(cb, openOne);
 
-      card.appendChild(left);
-      card.appendChild(body);
-      card.appendChild(sel);
-
-      frag.appendChild(card);
+      card.append(left, header, roleRow, sel);
+      frag.append(card);
     });
 
-    grid.appendChild(frag);
+    grid.append(frag);
   }
 
-  // ---------- renderer: table (new) ----------
   function renderTable() {
     const wrap = qs("#resultsTableWrap");
     if (!wrap) return;
-
     wrap.innerHTML = "";
     const table = document.createElement("table");
     table.className = "results-table";
-    table.setAttribute("role", "table");
-
     table.innerHTML = `
-      <thead role="rowgroup">
-        <tr role="row">
-          <th role="columnheader" style="width:36px;"></th>
-          <th role="columnheader" class="col-portal">Job Portals</th>
-          <th role="columnheader">DevOps</th>
-          <th role="columnheader">SRE</th>
-          <th role="columnheader">Cloud</th>
-          <th role="columnheader">Apigee</th>
-          <th role="columnheader" style="width:72px;">Select</th>
-          <th role="columnheader" style="width:72px;">Open</th>
+      <thead>
+        <tr>
+          <th>#</th>
+          <th>Portal</th>
+          <th>DevOps</th>
+          <th>SRE</th>
+          <th>Cloud</th>
+          <th>Apigee</th>
+          <th>Select</th>
+          <th>Open</th>
         </tr>
       </thead>
     `;
-
     const tbody = document.createElement("tbody");
-    tbody.setAttribute("role", "rowgroup");
 
-    const makeCell = (label, roleBlock, site) => {
-      const q = composeQuery(roleBlock, site);
-      const url = gUrl(q);
-      const td = document.createElement("td");
-      const div = document.createElement("div");
-      div.className = "cell-actions";
-      const a = document.createElement("a");
-      a.href = url; a.target = "_blank"; a.rel = "noopener";
-      a.textContent = label;
-      const btn = document.createElement("button");
-      btn.className = "mini";
-      btn.textContent = "Copy";
-      btn.addEventListener("click", (e) => {
-        e.preventDefault();
-        navigator.clipboard.writeText(q).then(() => {
-          btn.textContent = "Copied!";
-          setTimeout(() => (btn.textContent = "Copy"), 900);
-        });
-      });
-      div.appendChild(a); div.appendChild(btn);
-      td.appendChild(div);
-      return td;
-    };
-
-    portals.forEach((p, idx) => {
+    portals.forEach((p, i) => {
       if (!p || !p.name || !p.site) return;
-
       const tr = document.createElement("tr");
-      tr.setAttribute("role", "row");
+      const idx = document.createElement("td");
+      idx.textContent = i + 1;
+      const portal = document.createElement("td");
+      portal.innerHTML = `<strong>${p.name}</strong><br><span style="color:var(--muted);font-size:12px">${p.domain || ""}</span>`;
 
-      const tdIdx = document.createElement("td");
-      tdIdx.textContent = String(idx + 1);
-      tdIdx.style.color = "var(--muted)";
-      tr.appendChild(tdIdx);
+      const makeCell = (label, block) => {
+        const q = composeQuery(block, p.site);
+        const td = document.createElement("td");
+        const a = document.createElement("a");
+        a.href = gUrl(q);
+        a.target = "_blank";
+        a.textContent = label;
+        const btn = document.createElement("button");
+        btn.className = "mini";
+        btn.textContent = "Copy";
+        btn.setAttribute("aria-label", `Copy ${p.name} ${label} query`);
+        btn.onclick = (e) => {
+          e.preventDefault();
+          navigator.clipboard.writeText(q).then(() => {
+            btn.textContent = "Copied!";
+            setTimeout(() => (btn.textContent = "Copy"), 900);
+          });
+        };
+        td.append(a, " ", btn);
+        return td;
+      };
 
-      const tdPortal = document.createElement("td");
-      tdPortal.className = "col-portal";
-      tdPortal.innerHTML = `${p.name}<div class="domain" style="font-weight:400;color:var(--muted);font-size:12px">${p.domain || ""}</div>`;
-      tr.appendChild(tdPortal);
-
-      tr.appendChild(makeCell("DevOps", ROLE.DevOps, p.site));
-      tr.appendChild(makeCell("SRE",    ROLE.SRE,    p.site));
-      tr.appendChild(makeCell("Cloud",  ROLE.Cloud,  p.site));
-      tr.appendChild(makeCell("Apigee", ROLE.Apigee, p.site));
+      tr.append(
+        idx,
+        portal,
+        makeCell("DevOps", ROLE.DevOps),
+        makeCell("SRE", ROLE.SRE),
+        makeCell("Cloud", ROLE.Cloud),
+        makeCell("Apigee", ROLE.Apigee)
+      );
 
       const tdSel = document.createElement("td");
       const cb = document.createElement("input");
-      cb.type = "checkbox"; cb.className = "rowSelect";
-      tdSel.appendChild(cb);
-      tr.appendChild(tdSel);
-
+      cb.type = "checkbox";
+      cb.className = "rowSelect";
+      tdSel.append(cb);
       const tdOpen = document.createElement("td");
       const open = document.createElement("button");
       open.className = "btn ghost mini";
       open.textContent = "Open";
-      open.addEventListener("click", () => {
-        const q = composeQuery(firstCheckedRoleBlock(), p.site);
+      open.onclick = () => {
+        const roleBlock = firstCheckedRoleBlock();
+        const q = composeQuery(roleBlock, p.site);
         window.open(gUrl(q), "_blank");
-      });
-      tdOpen.appendChild(open);
-      tr.appendChild(tdOpen);
-
-      tbody.appendChild(tr);
+      };
+      tdOpen.append(open);
+      tr.append(tdSel, tdOpen);
+      tbody.append(tr);
     });
 
-    table.appendChild(tbody);
-    wrap.appendChild(table);
+    table.append(tbody);
+    wrap.append(table);
   }
 
-  // ---------- bindings ----------
-  async function bind() {
-    // chips (quick)
-    qsa("#chipsRow .chip").forEach((c) => {
-      c.addEventListener("click", () => {
-        c.classList.toggle("active");
-        scheduleRender();
-      });
-    });
+  // ---------- keyboard shortcuts ----------
+  document.addEventListener("keydown", (e) => {
+    const tag = (e.target?.tagName || "").toLowerCase();
+    const isTyping = tag === "input" || tag === "textarea" || e.target.isContentEditable;
+    if (isTyping || e.metaKey || e.ctrlKey) return;
 
-    // form submit
-    const form = qs("#searchForm");
-    if (form) {
-      form.addEventListener("submit", (e) => {
+    switch (e.key) {
+      case "/": case "s": case "S":
         e.preventDefault();
-        focusResultsNextRender = true;
-        scheduleRender();
-      });
-    }
-
-    // reset
-    qs("#resetBtn")?.addEventListener("click", () => {
-      qsa("#chipsRow .chip").forEach((c) => c.classList.remove("active"));
-      ["extra", "locationCustom"].forEach((id) => { const el = qs("#" + id); if (el) el.value = ""; });
-      if (qs("#recency")) qs("#recency").value = "";
-      locations = [];
-      renderLocationChips();
-      scheduleRender();
-    });
-
-    // sidebar location picker
-    qs("#addSelectedLocations")?.addEventListener("click", () => {
-      const sel = qs("#locationPicker");
-      if (!sel) return;
-      Array.from(sel.selectedOptions).forEach((opt) => addLocationChip(opt.value));
-      sel.selectedIndex = -1;
-    });
-    qs("#clearLocations")?.addEventListener("click", () => {
-      locations = [];
-      if (qs("#locationCustom")) qs("#locationCustom").value = "";
-      renderLocationChips();
-      scheduleRender();
-    });
-
-    // input changes
-    ["roleSRE","roleDevOps","roleCloud","roleApigee","recency","extra","locationCustom"]
-      .forEach((id) => qs("#" + id)?.addEventListener("change", scheduleRender));
-
-    // country selector
-    qs("#country")?.addEventListener("change", (e) => {
-      const val = String(e.target.value || "US");
-      countryCode = COUNTRY[val] ? val : "US";
-      updateCountryBadges();
-      scheduleRender();
-      saveState();
-    });
-
-    // view toggle
-    qs("#viewCards")?.addEventListener("change", (e) => {
-      if (e.target.checked) { viewMode = "cards"; saveState(); render(); }
-    });
-    qs("#viewTable")?.addEventListener("change", (e) => {
-      if (e.target.checked) { viewMode = "table"; saveState(); render(); }
-    });
-
-    // open selected (throttled, jittered)
-    qs("#openSelectedBtn")?.addEventListener("click", async () => {
-      const idxs = getTargetPortalIndexes();
-      const list = buildQueriesForIndexes(idxs);
-      for (let i = 0; i < list.length; i++) {
-        window.open(list[i].url, "_blank");
-        const jitter = 2200 + Math.floor(Math.random() * 800);
-        // eslint-disable-next-line no-await-in-loop
-        await sleep(jitter);
-      }
-    });
-
-    // copy all links
-    const copyAllBtn = qs("#copyAllBtn");
-    if (copyAllBtn) {
-      copyAllBtn.addEventListener("click", async () => {
-        const idxs = getTargetPortalIndexes();
-        const list = buildQueriesForIndexes(idxs);
-        if (!list.length) return;
-        const text = list.map((x) => `${x.name}: ${x.url}`).join("\n");
-        try {
-          await navigator.clipboard.writeText(text);
-          copyAllBtn.textContent = "Copied!";
-          setTimeout(() => (copyAllBtn.textContent = "Copy all links"), 900);
-        } catch {
-          alert("Copy failed. You can manually copy:\n\n" + text);
+        qs("#extra")?.focus();
+        break;
+      case "d": case "D":
+        e.preventDefault();
+        const darkEl = qs("#darkToggle");
+        if (darkEl) {
+          darkEl.checked = !darkEl.checked;
+          darkEl.dispatchEvent(new Event("change"));
         }
-      });
+        break;
+      case "o": case "O":
+        e.preventDefault();
+        qs("#openSelectedBtn")?.click();
+        break;
+      default:
+        break;
     }
-
-    // open in batches
-    const openInBatchesBtn = qs("#openInBatchesBtn");
-    if (openInBatchesBtn) {
-      openInBatchesBtn.addEventListener("click", async () => {
-        const idxs = getTargetPortalIndexes();
-        const list = buildQueriesForIndexes(idxs);
-        if (!list.length) return;
-        const BATCH = 5;
-        const groups = chunk(list, BATCH);
-        let batch = 0;
-        for (const g of groups) {
-          for (const item of g) {
-            window.open(item.url, "_blank");
-            // eslint-disable-next-line no-await-in-loop
-            await sleep(1200 + Math.floor(Math.random() * 600));
-          }
-          batch += 1;
-          openInBatchesBtn.textContent = `Opened batch ${batch}/${groups.length}`;
-          // eslint-disable-next-line no-await-in-loop
-          await sleep(5000 + Math.floor(Math.random() * 2000));
-        }
-        setTimeout(() => (openInBatchesBtn.textContent = "Open 5 at a time"), 1200);
-      });
-    }
-
-    // theme & prefs
-    const dark = qs("#darkToggle");
-    if (dark) {
-      const setDark = (on) => { document.body.classList.toggle("dark", on); saveState(); };
-      setDark(!!dark.checked);
-      dark.addEventListener("change", () => setDark(dark.checked));
-    }
-    const hc = qs("#highContrastToggle");
-    if (hc) {
-      const setHC = (on) => { document.body.classList.toggle("hc", on); saveState(); };
-      setHC(!!hc.checked);
-      hc.addEventListener("change", () => setHC(hc.checked));
-    }
-    const rm = qs("#reduceMotionToggle");
-    if (rm) {
-      const setRM = (on) => { document.body.classList.toggle("reduce-motion", on); saveState(); };
-      setRM(!!rm.checked);
-      rm.addEventListener("change", () => setRM(rm.checked));
-    }
-
-    // shortcuts
-    document.addEventListener("keydown", (e) => {
-      const tag = (e.target?.tagName || "").toLowerCase();
-      const isTyping = tag === "input" || tag === "textarea" || e.target.isContentEditable;
-      if (isTyping && e.key !== "Escape") return;
-
-      const focusEl = (sel) => { const el = qs(sel); if (el) { el.focus(); el.select?.(); } };
-
-      switch (e.key) {
-        case "/":
-        case "s":
-        case "S": e.preventDefault(); focusEl("#extra"); break;
-        case "l":
-        case "L": e.preventDefault(); focusEl("#locationCustom"); break;
-        case "r":
-        case "R": e.preventDefault(); focusEl("#recency"); break;
-        case "o":
-        case "O": e.preventDefault(); qs("#openSelectedBtn")?.click(); break;
-        case "g":
-        case "G": e.preventDefault(); (viewMode === "table" ? qs("#resultsTableWrap") : qs("#resultsGrid"))?.focus(); break;
-        case "d":
-        case "D": {
-          e.preventDefault();
-          const darkEl = qs("#darkToggle");
-          if (darkEl) { darkEl.checked = !darkEl.checked; darkEl.dispatchEvent(new Event("change")); }
-          break;
-        }
-        default: break;
-      }
-    });
-  }
+  });
 
   // ---------- init ----------
   document.addEventListener("DOMContentLoaded", () => {
-    // First load: system prefs if no storage
-    let hadStorage = false;
-    try { hadStorage = !!localStorage.getItem(STORAGE_KEY); } catch {}
-    if (!hadStorage) {
-      const prefersDark = window.matchMedia?.("(prefers-color-scheme: dark)")?.matches;
-      if (qs("#darkToggle")) qs("#darkToggle").checked = !!prefersDark;
-      document.body.classList.toggle("dark", !!prefersDark);
-
-      const prefersReduce = window.matchMedia?.("(prefers-reduced-motion: reduce)")?.matches;
-      if (qs("#reduceMotionToggle")) qs("#reduceMotionToggle").checked = !!prefersReduce;
-      document.body.classList.toggle("reduce-motion", !!prefersReduce);
-
-      // default country UI
-      const sel = qs("#country");
-      if (sel && COUNTRY[sel.value]) countryCode = sel.value;
-      updateCountryBadges();
-    } else {
-      loadState();
-    }
-
-    renderLocationChips();
-    bind();
+    loadState();
     render();
-
-    (window).DASH = { portals, ROLE, DEFAULT_US, COUNTRY };
-    console.log("DASH:init ok — portals:", portals.length, "country:", countryCode, "view:", viewMode);
   });
 })();
